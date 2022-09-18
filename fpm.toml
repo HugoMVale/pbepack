@@ -1,0 +1,12 @@
+name = "pbetools"
+version = "0.1.0"
+license = "license"
+author = "HugoMVale"
+maintainer = "57530119+HugoMVale@users.noreply.github.com"
+copyright = "Copyright 2022, HugoMVale"
+[build]
+auto-executables = true
+auto-tests = true
+auto-examples = true
+[install]
+library = false
