@@ -4,7 +4,8 @@ summary: pbetools is a modern-Fortran package to solve population balance equati
 particulate processes
 src_dir: ./src
          ./example
-output_dir: _site
+include_dir: ./include
+output_dir: ./_site
 page_dir: ./doc
 source: true
 proc_internals: true

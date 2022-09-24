@@ -1,5 +1,5 @@
 module grid
-!!   This module contains...
+!!   This module implements a 1D grid class.
    use, intrinsic :: iso_fortran_env, only: real64
    implicit none
    private
@@ -10,7 +10,7 @@ module grid
 
    type :: grid1
     !! 1D grid
-      character(20) :: name = "x [name]"
+      character(20) :: name = "x [-]"
         !! variable name
       real(rk), allocatable :: edges(:)
         !! vector(0:nc) of cell edges
@@ -18,9 +18,9 @@ module grid
         !! vector(nc) of cell centers, \( x_i \)
       real(rk), allocatable :: width(:)
         !! vector(nc) of cell widths,  \( x_{i+1/2} - x_{i-1/2} \)
-      real(rk), allocatable :: left(:)
+      real(rk), dimension(:), pointer :: left
         !! vector(nc) of left cell boundaries, \( x_{i-1/2} \)
-      real(rk), allocatable :: right(:)
+      real(rk), dimension(:), pointer :: right
         !! vector(nc) of right cell boundaries, , \( x_{i+1/2} \)
       integer :: ncells
         !! number of cells
@@ -32,7 +32,7 @@ contains
 
    pure subroutine new(self, xmin, xmax, nc)
       !! Constructor grid1
-      class(grid1), intent(inout) :: self
+      class(grid1), intent(inout), target :: self
         !! object
       real(rk), intent(in) :: xmin
         !! lower boundary of grid domain
@@ -53,8 +53,8 @@ contains
       ! Map values to grid object
       self%ncells = nc
       self%edges = xedges
-      self%left = xedges(0:nc - 1)
-      self%right = xedges(1:nc)
+      self%left => self%edges(0:nc - 1)
+      self%right => self%edges(1:nc)
       self%center = (self%left + self%right)/2
       self%width = self%right - self%left
 
