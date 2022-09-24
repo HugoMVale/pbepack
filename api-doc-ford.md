@@ -1,10 +1,12 @@
 ---
 project: pbetools
+license: mit
 summary: pbetools is a modern-Fortran package to solve population balance equations for 
-particulate processes
+         particulate processes
 src_dir: ./src
          ./example
-include_dir: ./include
+exclude: ftlList.F90
+preprocess: false
 output_dir: ./_site
 page_dir: ./doc
 source: true
@@ -22,6 +24,7 @@ predocmark: >
 docmark_alt: #
 predocmark_alt: <
 md_extensions: markdown.extensions.toc
+
 ---
 
 About

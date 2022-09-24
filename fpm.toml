@@ -1,6 +1,6 @@
 name = "pbetools"
 version = "0.1.0"
-license = "license"
+license = "mit"
 author = "HugoMVale"
 maintainer = "57530119+HugoMVale@users.noreply.github.com"
 copyright = "Copyright 2022, HugoMVale"
