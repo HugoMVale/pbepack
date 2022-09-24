@@ -1,6 +1,6 @@
 # pbetools
 
-[![CI](https://github.com/HugoMVale/pbetools/workflows/CI/badge.svg)](https://github.com/HugoMVale/pbetools/actions)
+[![CI](https://github.com/HugoMVale/pbetools/actions/workflows/CI.yml/badge.svg)](https://github.com/HugoMVale/pbetools/actions)
 [![codecov](https://codecov.io/gh/HugoMVale/pbetools/branch/main/graph/badge.svg?token=1XL5LQSO9P)](https://codecov.io/gh/HugoMVale/pbetools)
 
 ## Status
