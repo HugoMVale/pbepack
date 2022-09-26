@@ -1,13 +1,14 @@
-module test_agg
+module test_aggbreak1d
 !! Test for module 'weno' using test-drive.
    use iso_fortran_env, only: real64, stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use aggregation, only: agg1, agg1_init, combseries
+   use aggbreak1d, only: agg1d, agg1d_init
+   use combtypes, only: combarray
    use grid, only: grid1
    implicit none
    private
 
-   public :: collect_tests_agg
+   public :: collect_tests_aggbreak1d
 
    integer, parameter :: rk = real64
    logical, parameter :: verbose = .false.
@@ -15,27 +16,33 @@ module test_agg
 contains
 
    !> Collect all exported unit tests
-   subroutine collect_tests_agg(testsuite)
+   subroutine collect_tests_aggbreak1d(testsuite)
       ! Collection of tests
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
-                  new_unittest("aggregation 1D", test_agg1_init) &
+                  new_unittest("aggregation 1D", test_agg1d) &
                   !new_unittest("calc_c", test_calc_c), &
                   !new_unittest("wenok with non-uniform grid", test_wenok_nonuniform) &
                   ]
 
    end subroutine
 
-   subroutine test_agg1_init(error)
+   subroutine test_agg1d(error)
       type(error_type), allocatable, intent(out) :: error
       type(grid1) :: gx
-      integer, parameter :: nc = 4
-      type(combseries) :: aggcomb(nc)
+      integer, parameter :: nc = 1000
+      type(combarray) :: aggcomb(nc)
+      real(rk) :: t0, tend
 
-      call gx%new(1._rk, 100._rk, nc)
+      call gx%new(1._rk, 1000._rk, nc)
 
+      call cpu_time(t0)
       call agg1_init(gx, 3, aggcomb)
+      call cpu_time(tend)
+      print '("Time = ",f8.5," seconds.")', (tend - t0)
+
+      !call agg1(np, gx, aggcomb, afun, t, y, birth, death)
 
       ! call check(error, 1, 1)
       ! real(rk), dimension(:), allocatable :: vext, vl, vr
@@ -75,6 +82,6 @@ contains
 
       ! end do
 
-   end subroutine test_agg1_init
+   end subroutine test_agg1d
 
-end module test_agg
+end module test_aggbreak1d
