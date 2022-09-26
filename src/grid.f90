@@ -1,6 +1,7 @@
 module grid
 !!   This module implements a 1D grid class.
    use, intrinsic :: iso_fortran_env, only: real64
+   use stdlib_optval, only: optval
    implicit none
    private
 
@@ -44,11 +45,10 @@ contains
         !! grid scale: linear (1), logarithmic (2)
 
       real(rk) :: xedges(0:nc), rx
-      integer :: i, s
+      integer :: i
 
       ! Compute mesh
-      if (.not. present(scl)) s = 1
-      select case (s)
+      select case (optval(scl, 1))
       case (1)
          rx = (xmax - xmin)/nc
          do concurrent(i=0:nc)
@@ -57,7 +57,7 @@ contains
       case (2)
          rx = (log(xmax/xmin))/nc
          do concurrent(i=0:nc)
-            xedges(i) = xmin + rx*i
+            xedges(i) = log(xmin) + rx*i
          end do
          xedges = exp(xedges)
       end select
