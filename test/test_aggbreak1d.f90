@@ -38,7 +38,7 @@ contains
       call gx%new(1._rk, 1000._rk, nc)
 
       call cpu_time(t0)
-      call agg1_init(gx, 3, aggcomb)
+      call agg1d_init(gx, 3, aggcomb)
       call cpu_time(tend)
       print '("Time = ",f8.5," seconds.")', (tend - t0)
 
