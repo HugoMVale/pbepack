@@ -1,15 +1,15 @@
-# pbetools
+# pbepack
 
 [![CI](https://github.com/HugoMVale/pbetools/actions/workflows/CI.yml/badge.svg)](https://github.com/HugoMVale/pbetools/actions)
 [![codecov](https://codecov.io/gh/HugoMVale/pbetools/branch/main/graph/badge.svg?token=1XL5LQSO9P)](https://codecov.io/gh/HugoMVale/pbetools)
 
 ## Status
 
-`pbetools` is currently being developed and not yet ready for use.
+`pbepack` is currently being developed and not yet ready for use.
 
 ## Description
 
-`pbetools` is a modern-Fortran package to solve population balance equations (PBE) for one- and two-component aggregation processes using the (extended) fixed pivot method. For single component systems, the code implements the method of [Kumar & Ramkrishna (1996)](https://doi.org/10.1016/0009-2509(96)88489-2), and for bivariate aggregation the method of [Vale & McKenna (2005)](https://doi.org/10.1021/ie050179s).
+`pbepack` is a modern-Fortran package to solve population balance equations (PBE) for one- and two-component aggregation processes using the (extended) fixed pivot method. For single component systems, the code implements the method of [Kumar & Ramkrishna (1996)](https://doi.org/10.1016/0009-2509(96)88489-2), and for bivariate aggregation the method of [Vale & McKenna (2005)](https://doi.org/10.1021/ie050179s).
 
 ## Underlying PBE
 

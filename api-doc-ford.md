@@ -1,7 +1,7 @@
 ---
-project: pbetools
+project: pbepack
 license: mit
-summary: pbetools is a modern-Fortran package to solve population balance equations for 
+summary: pbepack is a modern-Fortran package to solve population balance equations for 
          particulate processes
 src_dir: ./src
          ./example
@@ -15,7 +15,7 @@ graph: true
 coloured_edges: true
 print_creation_date: true
 creation_date: %Y-%m-%d %H:%M %z
-project_github: https://github.com/HugoMVale/pbetools
+project_github: https://github.com/HugoMVale/pbepack
 author: HugoMVale
 github: https://github.com/HugoMVale/
 email: 57530119+HugoMVale@users.noreply.github.com
