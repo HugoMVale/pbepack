@@ -1,9 +1,5 @@
-module aggbreak1d
-!!   This module contains two total variation diminishing (TVD) high-order schemes for solving
-!! initial value problems. It is very important to use TVD schemes for time integration. Even
-!! with a TVD spacial discretization, if the time discretization is done by a non-TVD method,
-!! the result may be oscillatory.
-!!   Source: ICASE 97-65 by Shu, 1997.
+module agg1d
+!!   This module contains ...
    use, intrinsic :: iso_fortran_env, only: real64
    use grid, only: grid1
    use auxfunctions, only: delta_kronecker
@@ -11,7 +7,7 @@ module aggbreak1d
    implicit none
    private
 
-   public :: agg1d, agg1d_init
+   public :: agg, agg_init
 
    integer, parameter :: rk = real64
 
@@ -32,7 +28,7 @@ module aggbreak1d
 
 contains
 
-   pure subroutine agg1d(np, gx, aggcomb, afun, t, y, birth, death)
+   pure subroutine agg(np, gx, aggcomb, afun, t, y, birth, death)
       real(rk), intent(in) :: np(:)
         !! vector(N) with number of particles in cell 'i'
       type(grid1), intent(in) :: gx
@@ -66,7 +62,7 @@ contains
          do n = 1, aggcomb(i)%alength()
 
             j = aggcomb(i)%ia(n)
-            k = aggcomb(i)%ia(n)
+            k = aggcomb(i)%ib(n)
             weight = aggcomb(i)%weight(n)
 
             sumbi = sumbi + (1._rk - 0.5_rk*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
@@ -79,9 +75,9 @@ contains
       ! Death term
       death = np*matmul(a, np)
 
-   end subroutine agg1d
+   end subroutine agg
 
-   impure subroutine agg1d_init(gx, m, aggcomb)
+   impure subroutine agg_init(gx, m, aggcomb)
       type(grid1), intent(in) :: gx
          !! grid object
       integer, intent(in) :: m
@@ -111,10 +107,13 @@ contains
          ! Left and right cells, with protection for domain bounds
          if (i == 1) then
             vl = gx%left(i)**m
-         else if (i == nc) then
-            vr = gx%right(i)**m
          else
             vl = vcenter(i - 1)
+         end if
+
+         if (i == nc) then
+            vr = gx%right(i)**m
+         else
             vr = vcenter(i + 1)
          end if
 
@@ -125,10 +124,11 @@ contains
                vnew = vcenter(j) + vcenter(k)
 
                ! Check if new particle falls in region of "influence" of cell k
-               found = .true.
-               if ((vl <= vnew) .and. (vnew <= vc)) then
+               if ((vl < vnew) .and. (vnew <= vc)) then
+                  found = .true.
                   weight = (vnew - vl)/(vc - vl)
-               else if ((vc <= vnew) .and. (vnew <= vr)) then
+               else if ((vc < vnew) .and. (vnew < vr)) then
+                  found = .true.
                   weight = (vr - vnew)/(vr - vc)
                else
                   found = .false.
@@ -150,6 +150,6 @@ contains
 
       end do
 
-   end subroutine agg1d_init
+   end subroutine agg_init
 
-end module aggbreak1d
+end module agg1d
