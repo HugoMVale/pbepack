@@ -78,6 +78,7 @@ contains
    end subroutine agg
 
    impure subroutine agg_init(gx, m, aggcomb)
+   !! Precompute particle combinations leading to birth and respective weights.
       type(grid1), intent(in) :: gx
          !! grid object
       integer, intent(in) :: m
@@ -141,7 +142,7 @@ contains
             end do
          end do
 
-         ! Allocate substructure of right size
+         ! Allocate substructure of correct size
          call aggcomb(i)%alloc(list_comb%llength())
 
          ! Copy list content to aggcomb, then clear list
