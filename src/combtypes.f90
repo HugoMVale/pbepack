@@ -17,7 +17,7 @@ module combtypes
       type(ftlListDouble) :: weight
    contains
       procedure, pass(self) :: new
-      procedure, pass(self) :: llength
+      procedure, pass(self) :: size => list_size
       procedure, pass(self) :: append
       procedure, pass(self) :: clear
       procedure, pass(self) :: toarray
@@ -29,7 +29,7 @@ module combtypes
       real(rk), allocatable :: weight(:)
    contains
       procedure, pass(self) :: alloc
-      procedure, pass(self) :: alength
+      procedure, pass(self) :: size => array_size
    end type
 
 contains
@@ -43,7 +43,7 @@ contains
       call self%weight%New
    end subroutine
 
-   pure integer function llength(self) result(res)
+   pure integer function list_size(self) result(res)
       !! Size(comblist)
       class(comblist), intent(in) :: self
          !! Object
@@ -96,7 +96,7 @@ contains
       allocate (self%weight(n))
    end subroutine
 
-   pure integer function alength(self) result(res)
+   pure integer function array_size(self) result(res)
       !! Size(combarray)
       class(combarray), intent(in) :: self
          !! Object
