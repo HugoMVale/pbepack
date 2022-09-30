@@ -59,7 +59,7 @@ contains
       do concurrent(i=1:nc)
 
          sumbi = 0._rk
-         do n = 1, aggcomb(i)%alength()
+         do n = 1, aggcomb(i)%size()
 
             j = aggcomb(i)%ia(n)
             k = aggcomb(i)%ib(n)
@@ -143,7 +143,7 @@ contains
          end do
 
          ! Allocate substructure of correct size
-         call aggcomb(i)%alloc(list_comb%llength())
+         call aggcomb(i)%alloc(list_comb%size())
 
          ! Copy list content to aggcomb, then clear list
          call list_comb%toarray(aggcomb(i))
