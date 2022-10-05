@@ -21,7 +21,7 @@ module combtypes
       procedure, pass(self) :: append
       procedure, pass(self) :: clear
       procedure, pass(self) :: toarray
-   end type
+   end type comblist
 
    type :: combarray
       integer, allocatable :: ia(:)
@@ -30,28 +30,28 @@ module combtypes
    contains
       procedure, pass(self) :: alloc
       procedure, pass(self) :: size => array_size
-   end type
+   end type combarray
 
 contains
 
    impure subroutine new(self)
-      !! Constructor comblist
+   !! Constructor comblist.
       class(comblist), intent(inout) :: self
          !! Object
       call self%ia%New
       call self%ib%New
       call self%weight%New
-   end subroutine
+   end subroutine new
 
    pure integer function list_size(self) result(res)
-      !! Size(comblist)
+   !! Size(comblist).
       class(comblist), intent(in) :: self
          !! Object
       res = self%ia%Size()
-   end function
+   end function list_size
 
    impure subroutine append(self, ia, ib, weight)
-      !! Append values to comblist
+   !! Append values to comblist.
       class(comblist), intent(inout) :: self
          !! object
       integer :: ia
@@ -63,19 +63,19 @@ contains
       call self%ia%PushBack(ia)
       call self%ib%PushBack(ib)
       call self%weight%PushBack(weight)
-   end subroutine
+   end subroutine append
 
    impure subroutine clear(self)
-      !! Clear comblist
+   !! Clear comblist.
       class(comblist), intent(inout) :: self
          !! object
       call self%ia%Clear
       call self%ib%Clear
       call self%weight%Clear
-   end subroutine
+   end subroutine clear
 
    impure subroutine toarray(self, array)
-      !! Copy contents of comblist to array of same type
+   !! Copy contents of comblist to array of same type.
       class(comblist), intent(inout) :: self
          !! object
       type(combarray), intent(inout) :: array
@@ -83,10 +83,10 @@ contains
       call self%ia%CopyToArray(array%ia)
       call self%ib%CopyToArray(array%ib)
       call self%weight%CopyToArray(array%weight)
-   end subroutine
+   end subroutine toarray
 
    pure subroutine alloc(self, n)
-      !! Allocate combarray
+   !! Allocate combarray.
       class(combarray), intent(inout) :: self
          !! Object
       integer, intent(in) :: n
@@ -94,13 +94,13 @@ contains
       allocate (self%ia(n))
       allocate (self%ib(n))
       allocate (self%weight(n))
-   end subroutine
+   end subroutine alloc
 
    pure integer function array_size(self) result(res)
-      !! Size(combarray)
+   !! Size(combarray).
       class(combarray), intent(in) :: self
          !! Object
       res = size(self%ia)
-   end function
+   end function array_size
 
 end module

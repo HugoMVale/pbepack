@@ -31,7 +31,7 @@ contains
    end function delta_kronecker
 
    elemental real(rk) function heaviside(x)
-      !! Heaviside function, \( H(x) \)
+    !! Heaviside function, \( H(x) \)
       real(rk), intent(in) :: x
         !! Independent variable
 
@@ -44,8 +44,8 @@ contains
    end function heaviside
 
    elemental real(rk) function smooth_switch(x, xc, a, f1, f2)
-      !! This function transforms the discontinuous function f(x) = If(x<xc,f1,f2) into a
-      !! continuous function around xc.
+    !! This function transforms the discontinuous function f(x) = If(x<xc,f1,f2) into a
+    !! continuous function around xc.
       real(rk), intent(in) :: x
         !! independent variable
       real(rk), intent(in) :: xc
@@ -62,7 +62,7 @@ contains
    end function smooth_switch
 
    elemental real(rk) function gauss(x, mean, sigma)
-      !! Gauss distribution (normal distribution).
+    !! Gauss distribution (normal distribution).
       real(rk), intent(in) :: x
         !! ramdom variable
       real(rk), intent(in) :: mean
@@ -75,7 +75,7 @@ contains
    end function gauss
 
    elemental real(rk) function lognorm(x, mean, sigma)
-      !! Log-normal distribution.
+    !! Log-normal distribution.
       real(rk), intent(in) :: x
         !! ramdom variable
       real(rk), intent(in) :: mean
@@ -107,7 +107,7 @@ contains
    end function expo1d
 
    elemental real(rk) function expo2dmm(m1, m2, m10, m20, N0)
-      !! 2D Exponential distribution, with mass mass of each component as random variables.
+    !! 2D Exponential distribution, with mass mass of each component as random variables.
       real(rk), intent(in) :: m1
         !! mass of component 1
       real(rk), intent(in) :: m2
@@ -124,8 +124,8 @@ contains
    end function expo2dmm
 
    elemental real(rk) function expo2dmw(m, w1, m10, m20, N0)
-      !! 2D Exponential distribution, with total mass and composition of component 1 as
-      !! independent variables.
+    !! 2D Exponential distribution, with total mass and composition of component 1 as
+    !! independent variables.
       real(rk), intent(in) :: m
         !! total mass
       real(rk), intent(in) :: w1
@@ -147,7 +147,7 @@ contains
    end function expo2dmw
 
    pure real(rk) function average(x, weight)
-      !! This function computes the (weighted) average value of a vector x.
+    !! This function computes the (weighted) average value of a vector x.
       real(rk), intent(in) :: x(:)
         !! vector or samples
       real(rk), intent(in), optional :: weight(:)
@@ -162,7 +162,7 @@ contains
    end function average
 
    pure real(rk) function stddev(x)
-      !! Standard deviation of a sample.
+    !! Standard deviation of a sample.
       real(rk), intent(in) :: x(:)
         !! vector of samples
       real(rk) :: xmean
@@ -181,7 +181,7 @@ contains
    end function stddev
 
    pure logical function islocalmax(i, x)
-      !! This function verifies if the ith element of vector x is a local maximum.
+    !! This function verifies if the ith element of vector x is a local maximum.
       integer, intent(in) :: i
         !! index of location to be checked
       real(rk), intent(in) :: x(:)
