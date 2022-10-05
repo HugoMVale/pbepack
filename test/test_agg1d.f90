@@ -2,8 +2,7 @@ module test_agg1d
 !! Test for module 'agg1d' using test-drive.
    use iso_fortran_env, only: real64, stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use agg1d, only: agg, agg_init
-   use combtypes, only: combarray
+   use agg1d, only: aggterm
    use grid, only: grid1
    implicit none
    private
@@ -11,7 +10,7 @@ module test_agg1d
    public :: collect_tests_agg1d
 
    integer, parameter :: rk = real64
-   logical, parameter :: verbose = .false.
+   logical, parameter :: verbose = .true.
 
 contains
 
@@ -32,9 +31,9 @@ contains
    subroutine test_mass_conservation(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 120
+      integer, parameter :: nc = 1000
       type(grid1) :: gx
-      type(combarray) :: aggcomb(nc)
+      type(aggterm) :: agg
       real(rk), dimension(nc) :: np, birth, death
       real(rk) :: t, y(0:0), t0, tend, sum_birth, sum_death
       integer :: m, scl
@@ -43,16 +42,21 @@ contains
 
       ! Test linear and log grids
       do scl = 1, 2
-         call gx%new(1._rk, 1e3_rk, nc, scl=scl)
+         select case (scl)
+         case (1)
+            call gx%linear(1._rk, 1e3_rk, nc)
+         case (2)
+            call gx%log(1._rk, 1e3_rk, nc)
+         end select
 
          ! Test different moments
          do m = 1, 3
-            call agg_init(gx, m, aggcomb)
+            call agg%init(gx, m)
             np = 0
             np(1:nc/2 - 1) = 1
             t = 0._rk
-            y = 0
-            call agg(np, gx, aggcomb, aconst, t, y, birth, death)
+            y = 0._rk
+            call agg%eval(np, aconst, t, y, birth, death)
             sum_birth = sum(birth*gx%center**m)
             sum_death = sum(death*gx%center**m)
             call check(error, sum_birth, sum_death, rel=.true., thr=1e-14_rk)
@@ -73,26 +77,26 @@ contains
    subroutine test_case1(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 100
-      type(grid1) :: gx
-      type(combarray) :: aggcomb(nc)
-      real(rk), dimension(nc) :: n, birth, death
-      real(rk) :: t, y(0:0), t0, tend
-      integer :: i, m, scl
+      !    integer, parameter :: nc = 100
+      !    type(grid1) :: gx
+      !    type(combarray) :: aggcomb(nc)
+      !    real(rk), dimension(nc) :: n, birth, death
+      !    real(rk) :: t, y(0:0), t0, tend
+      !    integer :: i, m, scl
 
-      ! ! System parameters
-      ! n0 = 1._rk
-      ! x0 = 1._rk
-      ! a0 = 1._rk
+      !    ! ! System parameters
+      !    ! n0 = 1._rk
+      !    ! x0 = 1._rk
+      !    ! a0 = 1._rk
 
-      ! ! Grid
-      ! call gx%new(0._rk, 10*x0, nc, scl=1)
+      !    ! ! Grid
+      !    ! call gx%new(0._rk, 10*x0, nc, scl=1)
 
-      ! ! Initial condition
-      ! n = cell_average(expo1d, gx)
-      ! time = 0
+      !    ! ! Initial condition
+      !    ! n = cell_average(expo1d, gx)
+      !    ! time = 0
 
-      ! Call solver
+      !    ! Call solver
 
    end subroutine test_case1
 
