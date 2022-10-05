@@ -22,7 +22,7 @@ module pbetools
         !! number of cells
       type(grid1), pointer :: grid
         !! grid object
-      type(pbeterm), allocatable :: term(:)
+      class(pbeterm), allocatable :: term(:)
         !! vector of pbe terms
       procedure(ic1d), pointer :: ic => null()
         !! initial condition
