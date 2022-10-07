@@ -13,17 +13,20 @@ module agg1d
    integer, parameter :: rk = real64
 
    type, extends(pbeterm) :: aggterm
+   !! Aggregation term class.
       integer :: moment
-      type(combarray), allocatable :: array_comb(:)
+         !! moment of 'x' to be conserved upon aggregation
+      type(combarray), allocatable, private :: array_comb(:)
+         !! Array of particle combinations and weights for birth term
    contains
       procedure, pass(self) :: init => aggterm_init
       procedure, pass(self) :: eval => aggterm_eval
       procedure, pass(self), private :: aggterm_combinations
-   end type
+   end type aggterm
 
    abstract interface
       pure real(rk) function aggfun1d(xa, xb, t, y)
-      !! aggregation kernel for 1D system
+      !! Aggregation kernel for 1D system
          import :: rk
          real(rk), intent(in) :: xa
           !! internal coordinate of particle a
@@ -67,21 +70,21 @@ contains
    end subroutine aggterm_init
 
    pure subroutine aggterm_eval(self, np, afun, t, y, birth, death)
-   !! Evaluate rate of aggregation at given instant
+   !! Evaluate rate of aggregation at a given instant.
       class(aggterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: np(:)
-         !! vector(N) with number of particles in cell 'i'
+         !! vector(ncells) with number of particles in cell 'i'
       procedure(aggfun1d) :: afun
-         !! aggregation frequency function, a(x,x',t,y)
+         !! aggregation frequency function, \( a(x,x',t,y) /)
       real(rk), intent(in) :: t
          !! time
       real(rk), intent(in) :: y(:)
          !! environment vector
       real(rk), intent(out) :: birth(:)
-         !! vector(N) with birth term
+         !! vector(ncells) with birth term
       real(rk), intent(out) :: death(:)
-         !! vector(N) with death term
+         !! vector(ncells) with death term
 
       real(rk) :: a(self%ncells, self%ncells), sumbi, weight
       integer:: i, j, k, n

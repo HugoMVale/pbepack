@@ -16,7 +16,7 @@ module auxfunctions
 contains
 
    pure real(rk) function delta_kronecker(i, j)
-    !! Delta kronecker /( \delta_{i,j} /).
+    !! Delta kronecker \( \delta_{i,j} \).
       integer, intent(in) :: i
         !! Integer i
       integer, intent(in) :: j
@@ -31,7 +31,7 @@ contains
    end function delta_kronecker
 
    elemental real(rk) function heaviside(x)
-    !! Heaviside function, \( H(x) \)
+    !! Heaviside function, \( H(x) \).
       real(rk), intent(in) :: x
         !! Independent variable
 

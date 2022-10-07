@@ -12,21 +12,29 @@ module combtypes
    integer, parameter :: rk = real64
 
    type :: comblist
+   !! List of particle combinations.
       type(ftlListInt) :: ia
+         !! index of particle 'a'
       type(ftlListInt) :: ib
+         !! index of particle 'b'
       type(ftlListDouble) :: weight
+         !! weight of 'a+b' assigned to pivot
    contains
       procedure, pass(self) :: new
       procedure, pass(self) :: size => list_size
       procedure, pass(self) :: append
-      procedure, pass(self) :: clear
       procedure, pass(self) :: toarray
+      procedure, pass(self) :: clear
    end type comblist
 
    type :: combarray
+      ! Array of particle combinations
       integer, allocatable :: ia(:)
+         !! index of particle 'a'
       integer, allocatable :: ib(:)
+         !! index of particle 'b'
       real(rk), allocatable :: weight(:)
+         !! weight of 'a+b' assigned to pivot
    contains
       procedure, pass(self) :: alloc
       procedure, pass(self) :: size => array_size
