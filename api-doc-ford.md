@@ -6,6 +6,7 @@ summary: pbepack is a modern-Fortran package to solve population balance equatio
 src_dir: ./src
          ./example
 exclude: ftlList.F90
+         auxfunctions.f90
 preprocess: false
 output_dir: ./_site
 page_dir: ./doc
