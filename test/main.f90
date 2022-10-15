@@ -16,7 +16,7 @@ program tester
    use, intrinsic :: iso_fortran_env, only: error_unit
    use testdrive, only: run_testsuite, new_testsuite, testsuite_type, &
                         select_suite, run_selected, get_argument
-   use test_agg1d, only: collect_tests_agg1d
+   use test_agg1, only: collect_tests_agg1
 
    implicit none
 
@@ -28,7 +28,7 @@ program tester
    stat = 0
 
    testsuites = [ &
-                new_testsuite("aggregation 1D", collect_tests_agg1d) &
+                new_testsuite("aggregation 1D", collect_tests_agg1) &
                 !new_testsuite("hrutils", collect_tests_hrutils) &
                 ]
 

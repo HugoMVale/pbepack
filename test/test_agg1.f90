@@ -1,28 +1,27 @@
-module test_agg1d
+module test_agg1
 !! Test for module 'agg1d' using test-drive.
-   use iso_fortran_env, only: real64, stderr => error_unit
+   use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use agg1d, only: aggterm
+   use real_kinds, only: rk
+   use agg1, only: aggterm
    use grid, only: grid1
    implicit none
    private
 
-   public :: collect_tests_agg1d
+   public :: collect_tests_agg1
 
-   integer, parameter :: rk = real64
    logical, parameter :: verbose = .true.
 
 contains
 
    !> Collect all exported unit tests
-   subroutine collect_tests_agg1d(testsuite)
+   subroutine collect_tests_agg1(testsuite)
       ! Collection of tests
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
                   new_unittest("mass conservation", test_mass_conservation), &
                   new_unittest("analytical solution, case 1", test_case1) &
-                  !new_unittest("calc_c", test_calc_c), &
                   !new_unittest("wenok with non-uniform grid", test_wenok_nonuniform) &
                   ]
 
@@ -51,12 +50,12 @@ contains
 
          ! Test different moments
          do m = 1, 3
-            call agg%init(gx, m)
+            agg = aggterm(af=aconst, moment=m, grid=gx)
             np = 0
             np(1:nc/2 - 1) = 1
             t = 0._rk
             y = 0._rk
-            call agg%eval(np, aconst, t, y, birth, death)
+            call agg%eval(np, t, y, birth=birth, death=death)
             sum_birth = sum(birth*gx%center**m)
             sum_death = sum(death*gx%center**m)
             call check(error, sum_birth, sum_death, rel=.true., thr=1e-14_rk)
@@ -67,6 +66,7 @@ contains
             end if
             if (allocated(error)) return
          end do
+
       end do
 
       call cpu_time(tend)
@@ -175,4 +175,4 @@ contains
 
    end function solution_case1
 
-end module test_agg1d
+end module test_agg1

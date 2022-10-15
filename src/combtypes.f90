@@ -1,15 +1,13 @@
 module combtypes
 !!   This module implements two derived data types to store information about particle
 !! combinations, as required for evaluating aggregation birth terms.
-   use, intrinsic :: iso_fortran_env, only: real64
+   use real_kinds, only: rk
    use ftlListIntModule
    use ftlListDoubleModule
    implicit none
    private
 
    public :: comblist, combarray
-
-   integer, parameter :: rk = real64
 
    type :: comblist
    !! List of particle combinations.
