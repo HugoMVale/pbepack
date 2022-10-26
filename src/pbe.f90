@@ -42,9 +42,9 @@ contains
    type(pbe1) function pbe1_init(grid, ic, name) result(self)
    !! Initialize 'pbe1' object.
       type(grid1), intent(in), target :: grid
-        !! grid oject
+        !! grid object
       procedure(ic1), optional :: ic
-        !! initial condition
+        !! initial condition, \( f_0(x) \)
       character(*), intent(in), optional :: name
         !! pbe name
       self%ncells = grid%ncells
