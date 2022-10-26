@@ -1,27 +1,20 @@
 module agg1
    use real_kinds, only: rk
-   use basetypes, only: pbeterm
+   use basetypes, only: particleterm
    use grid, only: grid1
    use combtypes, only: comblist, combarray
    use auxfunctions, only: delta_kronecker
    use stdlib_optval, only: optval
-   use omp_lib
 
    implicit none
    private
 
    public :: aggterm
 
-   type, extends(pbeterm) :: aggterm
+   type, extends(particleterm) :: aggterm
    !! Aggregation term class.
-      procedure(aggf1), nopass, pointer :: af => null()
+      procedure(aggf1_t), nopass, pointer :: af => null()
          !! aggregation frequency
-      integer :: moment
-         !! moment of 'x' to be conserved upon aggregation
-      real(rk), allocatable :: birth(:)
-         !! birth term
-      real(rk), allocatable :: death(:)
-         !! death term
       real(rk), allocatable :: a(:, :)
          !! array of aggregation frequencies
       type(combarray), allocatable, private :: array_comb(:)
@@ -32,8 +25,8 @@ module agg1
    end type aggterm
 
    abstract interface
-      pure real(rk) function aggf1(xa, xb, t, y)
-      !! Aggregation kernel for 1D system
+      pure real(rk) function aggf1_t(xa, xb, t, y)
+      !! Aggregation frequency for 1D system
          import :: rk
          real(rk), intent(in) :: xa
             !! internal coordinate of particle a
@@ -54,8 +47,8 @@ contains
 
    type(aggterm) function aggterm_init(af, moment, grid) result(self)
    !! Initialize 'aggterm' object.
-      procedure(aggf1), optional :: af
-         !! aggregation frequency
+      procedure(aggf1_t), optional :: af
+         !! aggregation frequency, \( a(x,x',t,y) \)
       integer, intent(in) :: moment
          !! moment of 'x' to be conserved upon aggregation
       type(grid1), intent(in), target, optional :: grid
@@ -97,7 +90,7 @@ contains
       associate (gx => self%grid, nc => self%grid%ncells, m => self%moment)
 
          ! Allocate internal storage arrays
-         allocate (self%array_comb(nc), self%birth(nc), self%death(nc), self%a(nc, nc))
+         allocate (self%array_comb(nc), self%source(nc), self%sink(nc), self%a(nc, nc))
 
          ! Aux vector with 'm'-th power of cell centers
          vcenter = gx%center**m
@@ -159,7 +152,7 @@ contains
 
    end subroutine aggterm_combinations
 
-   pure subroutine aggterm_eval(self, np, t, y, total, birth, death)
+   pure subroutine aggterm_eval(self, np, t, y, total, source, sink)
    !! Evaluate rate of aggregation at a given instant.
       class(aggterm), intent(inout) :: self
          !! object
@@ -171,16 +164,16 @@ contains
          !! environment vector
       real(rk), intent(out), optional :: total(:)
          !! vector(ncells) with sum of birth and death terms
-      real(rk), intent(out), optional :: birth(:)
-         !! vector(ncells) with birth term
-      real(rk), intent(out), optional :: death(:)
-         !! vector(ncells) with death term
+      real(rk), intent(out), optional :: source(:)
+         !! vector(ncells) with source (birth, +) term
+      real(rk), intent(out), optional :: sink(:)
+         !! vector(ncells) with sink (death, -) term
 
       real(rk) :: sumbi, weight
       integer:: i, j, k, n
 
       associate (gx => self%grid, nc => self%grid%ncells, array_comb => self%array_comb, &
-                 birth_ => self%birth, death_ => self%death, a => self%a)
+                 source_ => self%source, sink_ => self%sink, a => self%a)
 
          ! Evaluate afun for all particle combinations
          do concurrent(j=1:nc, k=1:nc)
@@ -200,16 +193,16 @@ contains
                sumbi = sumbi + (1._rk - 0.5_rk*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
 
             end do
-            birth_(i) = sumbi
+            source_(i) = sumbi
 
          end do
 
          ! Death term
-         death_ = np*matmul(a, np)
+         sink_ = np*matmul(a, np)
 
-         if (present(birth)) birth = birth_
-         if (present(death)) death = death_
-         if (present(total)) total = birth_ + death_
+         if (present(source)) source = source_
+         if (present(sink)) sink = sink_
+         if (present(total)) total = source_ + sink_
 
       end associate
 
