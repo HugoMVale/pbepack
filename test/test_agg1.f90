@@ -33,8 +33,8 @@ contains
       integer, parameter :: nc = 1000
       type(grid1) :: gx
       type(aggterm) :: agg
-      real(rk), dimension(nc) :: np, birth, death
-      real(rk) :: t, y(0:0), t0, tend, sum_birth, sum_death
+      real(rk), dimension(nc) :: np, source, sink
+      real(rk) :: t, y(0:0), t0, tend, sum_source, sum_sink
       integer :: m, scl
 
       call cpu_time(t0)
@@ -55,14 +55,14 @@ contains
             np(1:nc/2 - 1) = 1
             t = 0._rk
             y = 0._rk
-            call agg%eval(np, t, y, birth=birth, death=death)
-            sum_birth = sum(birth*gx%center**m)
-            sum_death = sum(death*gx%center**m)
-            call check(error, sum_birth, sum_death, rel=.true., thr=1e-14_rk)
+            call agg%eval(np, t, y, source=source, sink=sink)
+            sum_source = sum(source*gx%center**m)
+            sum_sink = sum(sink*gx%center**m)
+            call check(error, sum_source, sum_sink, rel=.true., thr=1e-14_rk)
 
             if (allocated(error) .or. verbose) then
-               write (stderr, '(a12,es26.16e3)'), "sum_birth= ", sum_birth
-               write (stderr, '(a12,es26.16e3)'), "sum_death= ", sum_death
+               write (stderr, '(a12,es26.16e3)'), "sum_source = ", sum_source
+               write (stderr, '(a12,es26.16e3)'), "sum_sink   = ", sum_sink
             end if
             if (allocated(error)) return
          end do
