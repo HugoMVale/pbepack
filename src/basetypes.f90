@@ -24,6 +24,8 @@ module basetypes
          !! pointer to grid object
       logical :: inited = .false.
          !! flag initialization
+   contains
+      procedure, pass(self) :: set_grid
    end type pbeterm
 
    type, extends(pbeterm), abstract :: particleterm
@@ -34,6 +36,44 @@ module basetypes
          !! source(+) term
       real(rk), allocatable :: sink(:)
          !! sink(-) term
+   contains
+      procedure, pass(self) :: set_moment
    end type particleterm
+
+contains
+
+   subroutine set_grid(self, grid)
+      !! Setter method for grid
+      class(pbeterm), intent(inout) :: self
+         !! object
+      type(grid1), intent(in), target :: grid
+         !! grid1 object
+
+      if (grid%ncells > 0) then
+         self%grid => grid
+      else
+         self%msg = "Invalid 'grid'."
+         self%ierr = 1
+         error stop self%msg
+      end if
+
+   end subroutine
+
+   pure subroutine set_moment(self, moment)
+   !! Setter method for moment
+      class(particleterm), intent(inout) :: self
+         !! object
+      integer, intent(in) :: moment
+         !! moment of 'x' to be conserved upon aggregation
+
+      if (moment > 0) then
+         self%moment = moment
+      else
+         self%msg = "Invalid 'moment'. Valid range: moment >= 1."
+         self%ierr = 1
+         error stop self%msg
+      end if
+
+   end subroutine
 
 end module basetypes
