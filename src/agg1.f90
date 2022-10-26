@@ -54,7 +54,6 @@ contains
       type(grid1), intent(in), optional :: grid
          !! grid1 object
 
-      ! Assign inputs
       self%af => af
 
       call self%set_moment(moment)
