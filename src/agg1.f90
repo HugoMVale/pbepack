@@ -13,7 +13,7 @@ module agg1
 
    type, extends(particleterm) :: aggterm
    !! Aggregation term class.
-      procedure(aggf1_t), nopass, pointer :: af => null()
+      procedure(af1_t), nopass, pointer :: af => null()
          !! aggregation frequency
       real(rk), allocatable :: a(:, :)
          !! array of aggregation frequencies
@@ -25,7 +25,7 @@ module agg1
    end type aggterm
 
    abstract interface
-      pure real(rk) function aggf1_t(xa, xb, t, y)
+      pure real(rk) function af1_t(xa, xb, t, y)
       !! Aggregation frequency for 1D system
          import :: rk
          real(rk), intent(in) :: xa
@@ -47,7 +47,7 @@ contains
 
    type(aggterm) function aggterm_init(af, moment, grid) result(self)
    !! Initialize 'aggterm' object.
-      procedure(aggf1_t), optional :: af
+      procedure(af1_t), optional :: af
          !! aggregation frequency, \( a(x,x',t,y) \)
       integer, intent(in) :: moment
          !! moment of 'x' to be conserved upon aggregation

@@ -17,7 +17,7 @@ module pbe
         !! grid object
       !class(pbeterm), allocatable :: term(:)
         !! vector of pbe terms
-      procedure(ic1), nopass, pointer :: ic => null()
+      procedure(ic1_t), nopass, pointer :: ic => null()
         !! initial condition
    contains
       !procedure, pass(self) :: eval => pbe_eval
@@ -25,7 +25,7 @@ module pbe
    end type pbe1
 
    abstract interface
-      pure real(rk) function ic1(x)
+      pure real(rk) function ic1_t(x)
       !! Interface initial condition of PBE
          import rk
          real(rk), intent(in) :: x
@@ -43,7 +43,7 @@ contains
    !! Initialize 'pbe1' object.
       type(grid1), intent(in), target :: grid
         !! grid object
-      procedure(ic1), optional :: ic
+      procedure(ic1_t), optional :: ic
         !! initial condition, \( f_0(x) \)
       character(*), intent(in), optional :: name
         !! pbe name
