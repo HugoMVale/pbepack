@@ -16,7 +16,7 @@ module agg1
       procedure(af1_t), nopass, pointer :: af => null()
          !! aggregation frequency
       real(rk), allocatable :: a(:, :)
-         !! array of aggregation frequencies
+         !! matrix of aggregation frequencies
       type(combarray), allocatable, private :: array_comb(:)
          !! Array of particle combinations and weights for birth term
    contains
@@ -51,29 +51,22 @@ contains
          !! aggregation frequency, \( a(x,x',t,y) \)
       integer, intent(in) :: moment
          !! moment of 'x' to be conserved upon aggregation
-      type(grid1), intent(in), target, optional :: grid
+      type(grid1), intent(in), optional :: grid
          !! grid1 object
 
       ! Assign inputs
       self%af => af
-      if (moment > 0) then
-         self%moment = moment
-      else
-         self%msg = "Invalid input 'moment'. Valid range: moment >= 1."
-         self%ierr = 1
-         error stop self%msg
-      end if
+
+      call self%set_moment(moment)
 
       if (present(grid)) then
-         self%grid => grid
+         call self%set_grid(grid)
          call self%aggterm_combinations()
          self%inited = .true.
          self%msg = "Initialization completed successfully"
       else
          self%msg = "Missing 'grid'."
       end if
-
-      ! Precompute combinations
 
    end function aggterm_init
 
