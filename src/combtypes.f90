@@ -18,11 +18,11 @@ module combtypes
       type(ftlListDouble) :: weight
          !! weight of 'a+b' assigned to pivot
    contains
-      procedure, pass(self) :: new
+      procedure, pass(self) :: new => list_new
       procedure, pass(self) :: size => list_size
-      procedure, pass(self) :: append
-      procedure, pass(self) :: toarray
-      procedure, pass(self) :: clear
+      procedure, pass(self) :: append => list_append
+      procedure, pass(self) :: toarray => list_toarray
+      procedure, pass(self) :: clear => list_clear
    end type comblist
 
    type :: combarray
@@ -34,20 +34,20 @@ module combtypes
       real(rk), allocatable :: weight(:)
          !! weight of 'a+b' assigned to pivot
    contains
-      procedure, pass(self) :: alloc
+      procedure, pass(self) :: alloc => array_alloc
       procedure, pass(self) :: size => array_size
    end type combarray
 
 contains
 
-   impure subroutine new(self)
+   impure subroutine list_new(self)
    !! Constructor comblist.
       class(comblist), intent(inout) :: self
          !! Object
       call self%ia%New
       call self%ib%New
       call self%weight%New
-   end subroutine new
+   end subroutine list_new
 
    pure integer function list_size(self) result(res)
    !! Size(comblist).
@@ -56,7 +56,7 @@ contains
       res = self%ia%Size()
    end function list_size
 
-   impure subroutine append(self, ia, ib, weight)
+   impure subroutine list_append(self, ia, ib, weight)
    !! Append values to comblist.
       class(comblist), intent(inout) :: self
          !! object
@@ -69,18 +69,18 @@ contains
       call self%ia%PushBack(ia)
       call self%ib%PushBack(ib)
       call self%weight%PushBack(weight)
-   end subroutine append
+   end subroutine list_append
 
-   impure subroutine clear(self)
+   impure subroutine list_clear(self)
    !! Clear comblist.
       class(comblist), intent(inout) :: self
          !! object
       call self%ia%Clear
       call self%ib%Clear
       call self%weight%Clear
-   end subroutine clear
+   end subroutine list_clear
 
-   impure subroutine toarray(self, array)
+   impure subroutine list_toarray(self, array)
    !! Copy contents of comblist to array of same type.
       class(comblist), intent(inout) :: self
          !! object
@@ -89,9 +89,9 @@ contains
       call self%ia%CopyToArray(array%ia)
       call self%ib%CopyToArray(array%ib)
       call self%weight%CopyToArray(array%weight)
-   end subroutine toarray
+   end subroutine list_toarray
 
-   pure subroutine alloc(self, n)
+   pure subroutine array_alloc(self, n)
    !! Allocate combarray.
       class(combarray), intent(inout) :: self
          !! Object
@@ -100,7 +100,7 @@ contains
       allocate (self%ia(n))
       allocate (self%ib(n))
       allocate (self%weight(n))
-   end subroutine alloc
+   end subroutine array_alloc
 
    pure integer function array_size(self) result(res)
    !! Size(combarray).
