@@ -1,6 +1,6 @@
 module basetypes
    use real_kinds, only: rk
-   use grid, only: grid1
+   use grids, only: grid1
    implicit none
    private
 

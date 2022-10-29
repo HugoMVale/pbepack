@@ -1,7 +1,7 @@
 module pbe
    use real_kinds, only: rk
    use basetypes, only: base
-   use grid, only: grid1
+   use grids, only: grid1
    use agg1, only: aggterm
    use stdlib_optval, only: optval
    implicit none

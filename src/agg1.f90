@@ -1,7 +1,7 @@
 module agg1
    use real_kinds, only: rk
    use basetypes, only: particleterm
-   use grid, only: grid1
+   use grids, only: grid1
    use combtypes, only: comblist, combarray
    use auxfunctions, only: delta_kronecker
    use stdlib_optval, only: optval

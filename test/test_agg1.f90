@@ -4,7 +4,7 @@ module test_agg1
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use real_kinds, only: rk
    use agg1, only: aggterm
-   use grid, only: grid1
+   use grids, only: grid1
    implicit none
    private
 
