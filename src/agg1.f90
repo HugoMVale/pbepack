@@ -1,5 +1,5 @@
 module agg1
-!! Thi modules implements the derived types and procedures to compute the aggregation term
+!! This module implements the derived types and procedures to compute the aggregation term
 !! for 1D PBEs.
    use real_kinds
    use basetypes, only: particleterm
@@ -46,7 +46,7 @@ contains
 
    type(aggterm) function aggterm_init(af, moment, grid, name) result(self)
    !! Initialize 'aggterm' object.
-      procedure(af1_t), optional :: af
+      procedure(af1_t) :: af
          !! aggregation frequency, \( a(x,x',y) \)
       integer, intent(in) :: moment
          !! moment of 'x' to be conserved upon aggregation
@@ -68,7 +68,7 @@ contains
          self%msg = "Missing 'grid'."
       end if
 
-      if (present(name)) self%name = name
+      self%name = optval(name, "")
 
    end function aggterm_init
 
@@ -138,7 +138,7 @@ contains
             ! Allocate substructure of correct size
             call self%array_comb(i)%alloc(list_comb%size())
 
-            ! Copy list content to aggcomb, then clear list
+            ! Copy list content to array, then clear list
             call list_comb%toarray(self%array_comb(i))
             call list_comb%clear
 
@@ -162,7 +162,7 @@ contains
       real(rk), intent(out), optional :: sink(:)
          !! vector(ncells) with sink (death, -) term
 
-      real(rk) :: sumbi, weight
+      real(rk) :: weight
       integer:: i, j, k, n
 
       associate (gx => self%grid, nc => self%grid%ncells, array_comb => self%array_comb, &
@@ -174,20 +174,15 @@ contains
          end do
 
          ! Source/birth term
+         source_ = ZERO
          do concurrent(i=1:nc)
-
-            sumbi = ZERO
             do n = 1, array_comb(i)%size()
-
                j = array_comb(i)%ia(n)
                k = array_comb(i)%ib(n)
                weight = array_comb(i)%weight(n)
-
-               sumbi = sumbi + (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
-
+               source_(i) = source_(i) + &
+                            (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
             end do
-            source_(i) = sumbi
-
          end do
 
          ! Sink/death term
