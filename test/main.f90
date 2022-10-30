@@ -17,6 +17,7 @@ program tester
    use testdrive, only: run_testsuite, new_testsuite, testsuite_type, &
                         select_suite, run_selected, get_argument
    use test_agg1, only: collect_tests_agg1
+   use test_break1, only: collect_tests_break1
 
    implicit none
 
@@ -28,8 +29,8 @@ program tester
    stat = 0
 
    testsuites = [ &
-                new_testsuite("aggregation 1D", collect_tests_agg1) &
-                !new_testsuite("hrutils", collect_tests_hrutils) &
+                new_testsuite("aggregation 1D", collect_tests_agg1), &
+                new_testsuite("breakage 1D", collect_tests_break1) &
                 ]
 
    call get_argument(1, suite_name)
