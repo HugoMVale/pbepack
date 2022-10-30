@@ -19,7 +19,7 @@ module basetypes
    end type base
 
    type, extends(base), abstract :: pbeterm
-   !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.)
+   !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
       type(grid1), pointer :: grid => null()
          !! pointer to grid object
       logical :: inited = .false.
@@ -29,7 +29,7 @@ module basetypes
    end type pbeterm
 
    type, extends(pbeterm), abstract :: particleterm
-   !! Abstract 1D PBE particle term class (aggregation, breakage)
+   !! Abstract 1D PBE particle term class (aggregation, breakage).
       integer :: moment
          !! moment of 'x' to be conserved upon aggregation
       real(rk), allocatable :: source(:)
@@ -43,7 +43,7 @@ module basetypes
 contains
 
    subroutine set_grid(self, grid)
-      !! Setter method for grid
+   !! Setter method for grid.
       class(pbeterm), intent(inout) :: self
          !! object
       type(grid1), intent(in), target :: grid
@@ -60,7 +60,7 @@ contains
    end subroutine
 
    pure subroutine set_moment(self, moment)
-   !! Setter method for moment
+   !! Setter method for moment.
       class(particleterm), intent(inout) :: self
          !! object
       integer, intent(in) :: moment
