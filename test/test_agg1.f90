@@ -31,11 +31,11 @@ contains
    subroutine test_mass_conservation(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 1000
+      integer, parameter :: nc = 100
       type(grid1) :: gx
       type(aggterm) :: agg
       real(rk), dimension(nc) :: np, source, sink
-      real(rk) :: t, y(0:0), t0, tend, sum_source, sum_sink
+      real(rk) :: y(0:0), t0, tend, sum_source, sum_sink
       integer :: m, scl
 
       call cpu_time(t0)
@@ -54,7 +54,6 @@ contains
             agg = aggterm(af=aconst, moment=m, grid=gx)
             np = 0
             np(1:nc/2 - 1) = 1
-            t = 0._rk
             y = 0._rk
             call agg%eval(np, y, source=source, sink=sink)
             sum_source = sum(source*gx%center**m)
@@ -62,8 +61,10 @@ contains
             call check(error, sum_source, sum_sink, rel=.true., thr=1e-14_rk)
 
             if (allocated(error) .or. verbose) then
-               write (stderr, '(a12,es26.16e3)'), "sum_source = ", sum_source
-               write (stderr, '(a12,es26.16e3)'), "sum_sink   = ", sum_sink
+               write (stderr, '(a13,i1,a1,a2,es26.16e3)') "sum_source  (", m, ")", "=", sum_source
+               write (stderr, '(a13,i1,a1,a2,es26.16e3)') "sum_sink    (", m, ")", "=", sum_sink
+               write (stderr, '(a17,es26.16e3)') "source/sink (0) =", sum(source)/sum(sink)
+               print *
             end if
             if (allocated(error)) return
          end do
