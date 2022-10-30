@@ -1,10 +1,7 @@
 module utils_tests
 !! Utilities for tests.
-   use real_kinds, only: rk
+   use real_kinds
    implicit none
-   private
-
-   public :: aconst, asum, aprod, bconst, expo1d, solution_case1
 
 contains
 
@@ -16,8 +13,7 @@ contains
          !! internal coordinate of particle b
       real(rk), intent(in) :: y(:)
          !! environment vector
-      real(rk), parameter :: a0 = 1._rk
-      res = a0
+      res = ONE
    end function
 
    pure real(rk) function asum(xa, xb, y) result(res)
@@ -28,8 +24,7 @@ contains
          !! internal coordinate of particle b
       real(rk), intent(in) :: y(:)
          !! environment vector
-      real(rk), parameter :: a1 = 1._rk
-      res = a1*(xa + xb)
+      res = (xa + xb)
    end function
 
    pure real(rk) function aprod(xa, xb, y) result(res)
@@ -40,8 +35,7 @@ contains
          !! internal coordinate of particle b
       real(rk), intent(in) :: y(:)
          !! environment vector
-      real(rk), parameter :: a1 = 1._rk
-      res = a1*xa*xb
+      res = xa*xb
    end function
 
    elemental real(rk) function expo1d(x, x0, n0)
@@ -58,11 +52,30 @@ contains
    pure real(rk) function bconst(x, y) result(res)
    !! Constant breakage kernel for 1D system
       real(rk), intent(in) :: x
-      !! internal coordinate of particle
+         !! internal coordinate of particle
       real(rk), intent(in) :: y(:)
-      !! environment vector
-      real(rk), parameter :: b0 = 1._rk
-      res = b0
+         !! environment vector
+      res = ONE
+   end function
+
+   pure real(rk) function bsquare(x, y) result(res)
+   !! Square breakage kernel for 1D system
+      real(rk), intent(in) :: x
+         !! internal coordinate of particle
+      real(rk), intent(in) :: y(:)
+         !! environment vector
+      res = x**2
+   end function
+
+   pure real(rk) function duniform(xd, xo, y) result(res)
+   !! Uniform daughter distribution kernel for 1D system
+      real(rk), intent(in) :: xd
+         !! internal coordinate of daughter particle
+      real(rk), intent(in) :: xo
+         !! internal coordinate of original particle
+      real(rk), intent(in) :: y(:)
+         !! environment vector
+      res = TWO/xo
    end function
 
    elemental real(rk) function solution_case1(x, x0, n0, a0, t) result(res)
