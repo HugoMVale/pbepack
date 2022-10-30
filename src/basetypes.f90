@@ -1,4 +1,6 @@
 module basetypes
+!!   This module implements a number of (abstract) derived data types which form the basis for
+!! the other derived types in this package.
    use real_kinds, only: rk
    use grids, only: grid1
    implicit none
