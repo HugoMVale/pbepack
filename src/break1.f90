@@ -1,5 +1,7 @@
 module break1
-   use real_kinds, only: rk
+!! Thi modules implements the derived types and procedures to compute the breakage term
+!! for 1D PBEs.
+   use real_kinds
    use basetypes, only: particleterm
    use grids, only: grid1
    use auxfunctions, only: delta_kronecker
@@ -106,7 +108,7 @@ contains
       associate (gx => self%grid, nc => self%grid%ncells, b => self%b, d => self%d, &
                  source_ => self%source, sink_ => self%sink)
 
-         ! Evaluate bf for all particle sizes
+         ! Evaluate breakage frequency for all particle sizes
          do concurrent(i=1:nc)
             b(i) = self%bf(gx%center(i), y)
          end do
