@@ -4,7 +4,7 @@ module real_kinds
    implicit none
    private
 
-   public :: rk
+   public :: rk, ONE, ZERO, HALF
 
 ! #ifdef REAL32
 !    integer, parameter :: rk = real32
@@ -15,5 +15,7 @@ module real_kinds
 ! #else
 !    integer, parameter :: rk = real64
 ! #endif
+   real(rk), parameter :: ZERO = 0._rk, ONE = 1._rk
+   real(rk), parameter :: HALF = ONE/2
 
 end module real_kinds
