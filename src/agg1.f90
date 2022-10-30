@@ -1,5 +1,5 @@
 module agg1
-!! This module implements the derived types and procedures to compute the aggregation term
+!! This module implements derived types and procedures to compute the aggregation term
 !! for 1D PBEs.
    use real_kinds
    use basetypes, only: particleterm
