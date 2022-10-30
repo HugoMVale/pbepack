@@ -1,4 +1,4 @@
-module combtypes
+module aggtypes
 !!   This module implements two derived data types to store information about particle
 !! combinations, as required for evaluating aggregation birth terms.
    use real_kinds, only: rk
@@ -26,7 +26,7 @@ module combtypes
    end type comblist
 
    type :: combarray
-      ! Array of particle combinations
+   !! Array of particle combinations
       integer, allocatable :: ia(:)
          !! index of particle 'a'
       integer, allocatable :: ib(:)
@@ -109,4 +109,4 @@ contains
       res = size(self%ia)
    end function array_size
 
-end module
+end module aggtypes

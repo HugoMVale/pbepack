@@ -2,7 +2,7 @@ module agg1
    use real_kinds, only: rk
    use basetypes, only: particleterm
    use grids, only: grid1
-   use combtypes, only: comblist, combarray
+   use aggtypes, only: comblist, combarray
    use auxfunctions, only: delta_kronecker
    use stdlib_optval, only: optval
 
@@ -25,15 +25,13 @@ module agg1
    end type aggterm
 
    abstract interface
-      pure real(rk) function af1_t(xa, xb, t, y)
+      pure real(rk) function af1_t(xa, xb, y)
       !! Aggregation frequency for 1D system
          import :: rk
          real(rk), intent(in) :: xa
             !! internal coordinate of particle a
          real(rk), intent(in) :: xb
             !! internal coordinate of particle b
-         real(rk), intent(in) :: t
-            !! time
          real(rk), intent(in) :: y(:)
             !! environment vector
       end function
@@ -45,14 +43,16 @@ module agg1
 
 contains
 
-   type(aggterm) function aggterm_init(af, moment, grid) result(self)
+   type(aggterm) function aggterm_init(af, moment, grid, name) result(self)
    !! Initialize 'aggterm' object.
       procedure(af1_t), optional :: af
-         !! aggregation frequency, \( a(x,x',t,y) \)
+         !! aggregation frequency, \( a(x,x',y) \)
       integer, intent(in) :: moment
          !! moment of 'x' to be conserved upon aggregation
       type(grid1), intent(in), optional :: grid
          !! grid1 object
+      character(*), intent(in), optional :: name
+         !! object name
 
       self%af => af
 
@@ -66,6 +66,8 @@ contains
       else
          self%msg = "Missing 'grid'."
       end if
+
+      if (present(name)) self%name = name
 
    end function aggterm_init
 
@@ -144,14 +146,12 @@ contains
 
    end subroutine aggterm_combinations
 
-   pure subroutine aggterm_eval(self, np, t, y, total, source, sink)
+   pure subroutine aggterm_eval(self, np, y, total, source, sink)
    !! Evaluate rate of aggregation at a given instant.
       class(aggterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: np(:)
          !! vector(ncells) with number of particles in cell 'i'
-      real(rk), intent(in) :: t
-         !! time
       real(rk), intent(in) :: y(:)
          !! environment vector
       real(rk), intent(out), optional :: total(:)
@@ -169,10 +169,10 @@ contains
 
          ! Evaluate afun for all particle combinations
          do concurrent(j=1:nc, k=1:nc)
-            a(j, k) = self%af(gx%center(j), gx%center(k), t, y)
+            a(j, k) = self%af(gx%center(j), gx%center(k), y)
          end do
 
-         ! Birh term
+         ! Source/birth term
          do concurrent(i=1:nc)
 
             sumbi = 0._rk
@@ -189,7 +189,7 @@ contains
 
          end do
 
-         ! Death term
+         ! Sink/death term
          sink_ = np*matmul(a, np)
 
          if (present(source)) source = source_
