@@ -1,9 +1,10 @@
 module agg1
-   use real_kinds, only: rk
+!! Thi modules implements the derived types and procedures to compute the aggregation term
+!! for 1D PBEs.
+   use real_kinds
    use basetypes, only: particleterm
    use grids, only: grid1
    use aggtypes, only: comblist, combarray
-   use auxfunctions, only: delta_kronecker
    use stdlib_optval, only: optval
 
    implicit none
@@ -167,7 +168,7 @@ contains
       associate (gx => self%grid, nc => self%grid%ncells, array_comb => self%array_comb, &
                  source_ => self%source, sink_ => self%sink, a => self%a)
 
-         ! Evaluate afun for all particle combinations
+         ! Evaluate aggregation frequency for all particle combinations
          do concurrent(j=1:nc, k=1:nc)
             a(j, k) = self%af(gx%center(j), gx%center(k), y)
          end do
@@ -175,14 +176,14 @@ contains
          ! Source/birth term
          do concurrent(i=1:nc)
 
-            sumbi = 0._rk
+            sumbi = ZERO
             do n = 1, array_comb(i)%size()
 
                j = array_comb(i)%ia(n)
                k = array_comb(i)%ib(n)
                weight = array_comb(i)%weight(n)
 
-               sumbi = sumbi + (1._rk - 0.5_rk*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
+               sumbi = sumbi + (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
 
             end do
             source_(i) = sumbi
@@ -199,5 +200,20 @@ contains
       end associate
 
    end subroutine aggterm_eval
+
+   pure real(rk) function delta_kronecker(i, j)
+   !! Delta kronecker \( \delta_{i,j} \).
+      integer, intent(in) :: i
+       !! integer i
+      integer, intent(in) :: j
+       !! integer j
+
+      if (i == j) then
+         delta_kronecker = ONE
+      else
+         delta_kronecker = ZERO
+      end if
+
+   end function delta_kronecker
 
 end module agg1
