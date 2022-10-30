@@ -1,10 +1,10 @@
 module break1
-!! Thi modules implements the derived types and procedures to compute the breakage term
+!! Thi modules implements derived types and procedures to compute the breakage term
 !! for 1D PBEs.
    use real_kinds
    use basetypes, only: particleterm
    use grids, only: grid1
-   use auxfunctions, only: delta_kronecker
+   use quadratures, only: quad1_r1
    use stdlib_optval, only: optval
 
    implicit none
@@ -56,9 +56,9 @@ contains
 
    type(breakterm) function breakterm_init(bf, df, moment, grid, name) result(self)
    !! Initialize 'breakterm' object.
-      procedure(bf1_t), optional :: bf
+      procedure(bf1_t) :: bf
          !! breakage frequency, \( b(x,y) \)
-      procedure(df1_t), optional :: df
+      procedure(df1_t) :: df
          !! daughter distribution, \( d(x,x',y) \)
       integer, intent(in) :: moment
          !! moment of 'x' to be conserved upon aggregation
@@ -83,7 +83,7 @@ contains
          self%msg = "Missing 'grid'."
       end if
 
-      if (present(name)) self%name = name
+      self%name = optval(name, "")
 
    end function breakterm_init
 
@@ -102,40 +102,76 @@ contains
       real(rk), intent(out), optional :: sink(:)
          !! vector(ncells) with sink (death, -) term
 
-      real(rk) :: sumbi
       integer :: i, k
 
-      associate (gx => self%grid, nc => self%grid%ncells, b => self%b, d => self%d, &
+      associate (nc => self%grid%ncells, b => self%b, &
                  source_ => self%source, sink_ => self%sink)
 
          ! Evaluate breakage frequency for all particle sizes
          do concurrent(i=1:nc)
-            b(i) = self%bf(gx%center(i), y)
-         end do
-
-         !
-
-         ! Source/birth term
-         do concurrent(i=1:nc)
-
-            sumbi = 0._rk
-            do k = i, nc
-
-               sumbi = sumbi + b(k)*np(k)
-
-            end do
-            source_(i) = sumbi
-
+            b(i) = self%bf(self%grid%center(i), y)
          end do
 
          ! Sink/death term
-         sink_ = np*b
+         sink_ = b*np
+
+         ! Source/birth term
+         source_ = ZERO
+         !do concurrent(i=1:nc)
+         do i = 1, nc
+            do k = i, nc
+               source_(i) = source_(i) + weight()*sink_(k)
+            end do
+         end do
 
          if (present(source)) source = source_
          if (present(sink)) sink = sink_
          if (present(total)) total = source_ + sink_
 
       end associate
+
+   contains
+
+      pure real(rk) function weight()
+      !! Weight fraction of particle k assigned to particle i.
+
+         real(rk) :: term(2)
+
+         associate (x => self%grid%center, m => self%moment)
+            if (i == k) then
+               term(1) = ZERO
+            else
+               term(1) = (dfint(i, 0)*x(i + 1)**m - dfint(i, m))/ &
+                         (x(i + 1)**m - x(i)**m)
+            end if
+
+            if (i == 1) then
+               term(2) = ZERO
+            else
+               term(2) = (dfint(i - 1, 0)*x(i - 1)**m - dfint(i - 1, m))/ &
+                         (x(i - 1)**m - x(i)**m)
+            end if
+         end associate
+
+         weight = sum(term)
+
+      end function weight
+
+      pure real(rk) function dfint(i_, m_) result(res)
+         integer, intent(in) :: i_, m_
+         real(rk) :: xa, xb, xm
+         associate (x => self%grid%center)
+            xa = x(i_)
+            xb = x(i_ + 1)
+            xm = (xa + xb)/2
+            res = ( &
+                  xa**m_*self%df(xa, x(k), y) + &
+                  xb**m_*self%df(xb, x(k), y) + &
+                  xm**m_*self%df(xm, x(k), y)*4 &
+                  )*(xb - xa)/6
+         end associate
+
+      end function dfint
 
    end subroutine breakterm_eval
 
