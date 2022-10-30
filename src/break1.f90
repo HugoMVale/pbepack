@@ -21,30 +21,26 @@ module break1
       real(rk), allocatable :: d(:, :)
          !! matrix of daughter probabilities
    contains
-      !procedure, pass(self) :: eval => breakterm_eval
+      procedure, pass(self) :: eval => breakterm_eval
    end type breakterm
 
    abstract interface
-      pure real(rk) function bf1_t(x, t, y)
+      pure real(rk) function bf1_t(x, y)
       !! Breakage frequency for 1D system
          import :: rk
          real(rk), intent(in) :: x
             !! internal coordinate of particle
-         real(rk), intent(in) :: t
-            !! time
          real(rk), intent(in) :: y(:)
             !! environment vector
       end function
 
-      pure real(rk) function df1_t(xd, xo, t, y)
+      pure real(rk) function df1_t(xd, xo, y)
       !! Daughter distribution for 1D system
          import :: rk
          real(rk), intent(in) :: xd
             !! internal coordinate of daughter particle
          real(rk), intent(in) :: xo
             !! internal coordinate of original particle
-         real(rk), intent(in) :: t
-            !! time
          real(rk), intent(in) :: y(:)
             !! environment vector
       end function
@@ -56,16 +52,18 @@ module break1
 
 contains
 
-   type(breakterm) function breakterm_init(bf, df, moment, grid) result(self)
+   type(breakterm) function breakterm_init(bf, df, moment, grid, name) result(self)
    !! Initialize 'breakterm' object.
       procedure(bf1_t), optional :: bf
-         !! breakage frequency, \( b(x,t,y) \)
+         !! breakage frequency, \( b(x,y) \)
       procedure(df1_t), optional :: df
-         !! daughter distribution, \( d(x,x',t,y) \)
+         !! daughter distribution, \( d(x,x',y) \)
       integer, intent(in) :: moment
          !! moment of 'x' to be conserved upon aggregation
       type(grid1), intent(in), target, optional :: grid
          !! grid1 object
+      character(*), intent(in), optional :: name
+         !! object name
 
       self%bf => bf
       self%df => df
@@ -74,69 +72,69 @@ contains
 
       if (present(grid)) then
          call self%set_grid(grid)
-         allocate (self%b(grid%ncells), self%d(grid%ncells, grid%ncells))
+         associate (nc => self%grid%ncells)
+            allocate (self%b(nc), self%d(nc, nc), self%source(nc), self%sink(nc))
+         end associate
          self%inited = .true.
          self%msg = "Initialization completed successfully"
       else
          self%msg = "Missing 'grid'."
       end if
 
+      if (present(name)) self%name = name
+
    end function breakterm_init
 
-   ! pure subroutine aggterm_eval(self, np, t, y, total, birth, death)
-   ! !! Evaluate rate of aggregation at a given instant.
-   !    class(aggterm), intent(inout) :: self
-   !       !! object
-   !    real(rk), intent(in) :: np(:)
-   !       !! vector(ncells) with number of particles in cell 'i'
-   !    real(rk), intent(in) :: t
-   !       !! time
-   !    real(rk), intent(in) :: y(:)
-   !       !! environment vector
-   !    real(rk), intent(out), optional :: total(:)
-   !       !! vector(ncells) with sum of birth and death terms
-   !    real(rk), intent(out), optional :: birth(:)
-   !       !! vector(ncells) with birth term
-   !    real(rk), intent(out), optional :: death(:)
-   !       !! vector(ncells) with death term
+   pure subroutine breakterm_eval(self, np, y, total, source, sink)
+   !! Evaluate rate of breakage at a given instant.
+      class(breakterm), intent(inout) :: self
+         !! object
+      real(rk), intent(in) :: np(:)
+         !! vector(ncells) with number of particles in cell 'i'
+      real(rk), intent(in) :: y(:)
+         !! environment vector
+      real(rk), intent(out), optional :: total(:)
+         !! vector(ncells) with sum of birth and death terms
+      real(rk), intent(out), optional :: source(:)
+         !! vector(ncells) with source (birth, +) term
+      real(rk), intent(out), optional :: sink(:)
+         !! vector(ncells) with sink (death, -) term
 
-   !    real(rk) :: sumbi, weight
-   !    integer:: i, j, k, n
+      real(rk) :: sumbi
+      integer :: i, k
 
-   !    associate (gx => self%grid, nc => self%grid%ncells, array_comb => self%array_comb, &
-   !               birth_ => self%birth, death_ => self%death, a => self%a)
+      associate (gx => self%grid, nc => self%grid%ncells, b => self%b, d => self%d, &
+                 source_ => self%source, sink_ => self%sink)
 
-   !       ! Evaluate afun for all particle combinations
-   !       do concurrent(j=1:nc, k=1:nc)
-   !          a(j, k) = self%af(gx%center(j), gx%center(k), t, y)
-   !       end do
+         ! Evaluate bf for all particle sizes
+         do concurrent(i=1:nc)
+            b(i) = self%bf(gx%center(i), y)
+         end do
 
-   !       ! Birh term
-   !       do concurrent(i=1:nc)
+         !
 
-   !          sumbi = 0._rk
-   !          do n = 1, array_comb(i)%size()
+         ! Source/birth term
+         do concurrent(i=1:nc)
 
-   !             j = array_comb(i)%ia(n)
-   !             k = array_comb(i)%ib(n)
-   !             weight = array_comb(i)%weight(n)
+            sumbi = 0._rk
+            do k = i, nc
 
-   !             sumbi = sumbi + (1._rk - 0.5_rk*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
+               sumbi = sumbi + b(k)*np(k)
 
-   !          end do
-   !          birth_(i) = sumbi
+            end do
+            source_(i) = sumbi
 
-   !       end do
+         end do
 
-   !       ! Death term
-   !       death_ = np*matmul(a, np)
+         ! Sink/death term
+         sink_ = np*b
 
-   !       if (present(birth)) birth = birth_
-   !       if (present(death)) death = death_
-   !       if (present(total)) total = birth_ + death_
+         if (present(source)) source = source_
+         if (present(sink)) sink = sink_
+         if (present(total)) total = source_ + sink_
 
-   !    end associate
+      end associate
 
-   ! end subroutine aggterm_eval
+   end subroutine breakterm_eval
 
 end module break1
