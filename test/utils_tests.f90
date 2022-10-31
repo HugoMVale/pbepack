@@ -1,6 +1,7 @@
 module utils_tests
 !! Utilities for tests.
    use real_kinds
+   use stdlib_optval, only: optval
    implicit none
 
 contains
@@ -67,7 +68,7 @@ contains
       res = x**2
    end function
 
-   pure real(rk) function duniform(xd, xo, y) result(res)
+   pure real(rk) function duniform(xd, xo, y, m) result(res)
    !! Uniform daughter distribution kernel for 1D system
       real(rk), intent(in) :: xd
          !! internal coordinate of daughter particle
@@ -75,7 +76,11 @@ contains
          !! internal coordinate of original particle
       real(rk), intent(in) :: y(:)
          !! environment vector
-      res = TWO/xo
+      integer, intent(in), optional :: m
+         !! moment of 'x' conserved during breakage
+      integer :: m_
+      m_ = optval(m, 1)
+      res = (TWO*m_/xo**m_)*xd**(m_ - 1)
    end function
 
    elemental real(rk) function solution_case1(x, x0, n0, a0, t) result(res)
