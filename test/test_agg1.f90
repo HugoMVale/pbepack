@@ -2,6 +2,7 @@ module test_agg1
 !! Test for module 'agg1d' using test-drive.
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
+   use stdlib_strings, only: to_string
    use real_kinds, only: rk
    use agg1, only: aggterm
    use grids, only: grid1
@@ -35,8 +36,9 @@ contains
       type(grid1) :: gx
       type(aggterm) :: agg
       real(rk), dimension(nc) :: np, source, sink
-      real(rk) :: y(0:0), t0, tend, sum_source, sum_sink
-      integer :: m, scl
+      real(rk) :: y(0:0), moment_source_0, moment_source_m, moment_sink_0, moment_sink_m
+      real(rk) :: t0, tend
+      integer :: moment, scl
 
       call cpu_time(t0)
 
@@ -50,29 +52,38 @@ contains
          end select
 
          ! Test different moments
-         do m = 1, 3
-            agg = aggterm(af=aconst, moment=m, grid=gx)
+         do moment = 1, 3
+            agg = aggterm(af=aconst, moment=moment, grid=gx)
             np = 0
             np(1:nc/2 - 1) = 1
             y = 0._rk
             call agg%eval(np, y, source=source, sink=sink)
-            sum_source = sum(source*gx%center**m)
-            sum_sink = sum(sink*gx%center**m)
-            call check(error, sum_source, sum_sink, rel=.true., thr=1e-14_rk)
+
+            moment_source_0 = sum(source)
+            moment_sink_0 = sum(sink)
+            moment_source_m = sum(source*gx%center**moment)
+            moment_sink_m = sum(sink*gx%center**moment)
+
+            call check(error, moment_source_m, moment_sink_m, &
+                       rel=.true., thr=1e-14_rk)
+            call check(error, moment_source_0, moment_sink_0/2, &
+                       rel=.true., thr=1e-14_rk)
 
             if (allocated(error) .or. verbose) then
-               write (stderr, '(a13,i1,a1,a2,es26.16e3)') "sum_source  (", m, ")", "=", sum_source
-               write (stderr, '(a13,i1,a1,a2,es26.16e3)') "sum_sink    (", m, ")", "=", sum_sink
-               write (stderr, '(a17,es26.16e3)') "source/sink (0) =", sum(source)/sum(sink)
                print *
+               write (stderr, '(a18,3x,i1)') "scale type       =", gx%scl
+               write (stderr, '(a18,3x,i1)') "preserved moment =", moment
+               write (stderr, '(a18,(es24.14e3))') "source/sink(0)   =", moment_source_0/moment_sink_0
+               write (stderr, '(a18,(es24.14e3))') "source/sink("//to_string(moment)//")   =", moment_source_m/moment_sink_m
             end if
             if (allocated(error)) return
          end do
-
       end do
 
       call cpu_time(tend)
+      print *
       print '("Time = ",f8.5," seconds.")', (tend - t0)
+      print *
 
    end subroutine test_mass_conservation
 
