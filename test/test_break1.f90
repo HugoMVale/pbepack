@@ -32,7 +32,7 @@ contains
    subroutine test_mass_conservation(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 100
+      integer, parameter :: nc = 500
       type(grid1) :: gx
       type(breakterm) :: break
       real(rk), dimension(nc) :: np, birth, death
@@ -53,7 +53,7 @@ contains
 
          ! Test different moments
          do moment = 1, 3
-            break = breakterm(bf=bconst, df=dfuni, moment=moment, grid=gx)
+            break = breakterm(bfnc=bconst, dfnc=dfuni, moment=moment, grid=gx)
             np = 0
             np(nc) = 1
             y = 0._rk
@@ -65,9 +65,9 @@ contains
             moment_death_m = sum(death*gx%center**moment)
 
             call check(error, moment_birth_m, moment_death_m, &
-                       rel=.true., thr=1e5_rk)
+                       rel=.true., thr=1e-8_rk)
             call check(error, moment_birth_0, moment_death_0*2, &
-                       rel=.true., thr=1e5_rk)
+                       rel=.true., thr=1e-2_rk)
 
             if (allocated(error) .or. verbose) then
                print *

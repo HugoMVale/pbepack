@@ -14,19 +14,19 @@ module agg1
 
    type, extends(particleterm) :: aggterm
    !! Aggregation term class.
-      procedure(af1_t), nopass, pointer :: af => null()
+      procedure(afnc1_t), nopass, pointer :: afnc => null()
          !! aggregation frequency
       real(rk), allocatable :: a(:, :)
          !! matrix of aggregation frequencies
       type(combarray), allocatable, private :: array_comb(:)
-         !! Array of particle combinations and weights for birth term
+         !! array of particle combinations and weights for birth term
    contains
       procedure, pass(self) :: eval => aggterm_eval
       procedure, pass(self), private :: aggterm_combinations
    end type aggterm
 
    abstract interface
-      pure real(rk) function af1_t(xa, xb, y)
+      pure real(rk) function afnc1_t(xa, xb, y)
       !! Aggregation frequency for 1D system
          import :: rk
          real(rk), intent(in) :: xa
@@ -44,18 +44,18 @@ module agg1
 
 contains
 
-   type(aggterm) function aggterm_init(af, moment, grid, name) result(self)
+   type(aggterm) function aggterm_init(afnc, moment, grid, name) result(self)
    !! Initialize 'aggterm' object.
-      procedure(af1_t) :: af
+      procedure(afnc1_t) :: afnc
          !! aggregation frequency, \( a(x,x',y) \)
       integer, intent(in) :: moment
-         !! moment of 'x' to be conserved upon aggregation
+         !! moment of \( x \) to be conserved upon aggregation
       type(grid1), intent(in), optional :: grid
          !! grid1 object
       character(*), intent(in), optional :: name
          !! object name
 
-      self%af => af
+      self%afnc => afnc
 
       call self%set_moment(moment)
 
@@ -165,12 +165,12 @@ contains
       real(rk) :: weight
       integer:: i, j, k, n
 
-      associate (gx => self%grid, nc => self%grid%ncells, array_comb => self%array_comb, &
-                 a => self%a, result_ => self%result)
+      associate (nc => self%grid%ncells, x => self%grid%center, &
+                 array_comb => self%array_comb, a => self%a, result_ => self%result)
 
          ! Evaluate aggregation frequency for all particle combinations
          do concurrent(j=1:nc, k=1:nc)
-            a(j, k) = self%af(gx%center(j), gx%center(k), y)
+            a(j, k) = self%afnc(x(j), x(k), y)
          end do
 
          ! Birth term
@@ -184,7 +184,6 @@ contains
                             (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
             end do
          end do
-
          if (present(birth)) birth = result_
 
          ! Death term

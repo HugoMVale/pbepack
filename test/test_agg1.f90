@@ -53,7 +53,7 @@ contains
 
          ! Test different moments
          do moment = 1, 3
-            agg = aggterm(af=aconst, moment=moment, grid=gx)
+            agg = aggterm(afnc=aconst, moment=moment, grid=gx)
             np = 0
             np(1:nc/2 - 1) = 1
             y = 0._rk
