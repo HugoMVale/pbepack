@@ -13,9 +13,9 @@ module break1
 
    type, extends(particleterm) :: breakterm
    !! Breakage term class.
-      procedure(bf1_t), nopass, pointer :: bf => null()
+      procedure(bfnc1_t), nopass, pointer :: bfnc => null()
          !! breakage frequency
-      procedure(df1_t), nopass, pointer :: df => null()
+      procedure(dfnc1_t), nopass, pointer :: dfnc => null()
          !! daughter distribution
       real(rk), allocatable :: b(:)
          !! vector of breakage frequencies
@@ -28,7 +28,7 @@ module break1
    end type breakterm
 
    abstract interface
-      pure real(rk) function bf1_t(x, y)
+      pure real(rk) function bfnc1_t(x, y)
       !! Breakage frequency for 1D system
          import :: rk
          real(rk), intent(in) :: x
@@ -37,7 +37,7 @@ module break1
             !! environment vector
       end function
 
-      pure real(rk) function df1_t(xd, xo, y)
+      pure real(rk) function dfnc1_t(xd, xo, y)
       !! Daughter distribution for 1D system
          import :: rk
          real(rk), intent(in) :: xd
@@ -55,11 +55,11 @@ module break1
 
 contains
 
-   type(breakterm) function breakterm_init(bf, df, moment, grid, name) result(self)
+   type(breakterm) function breakterm_init(bfnc, dfnc, moment, grid, name) result(self)
    !! Initialize 'breakterm' object.
-      procedure(bf1_t) :: bf
+      procedure(bfnc1_t) :: bfnc
          !! breakage frequency, \( b(x,y) \)
-      procedure(df1_t) :: df
+      procedure(dfnc1_t) :: dfnc
          !! daughter distribution, \( d(x,x',y) \)
       integer, intent(in) :: moment
          !! moment of 'x' to be conserved upon aggregation
@@ -68,8 +68,8 @@ contains
       character(*), intent(in), optional :: name
          !! object name
 
-      self%bf => bf
-      self%df => df
+      self%bfnc => bfnc
+      self%dfnc => dfnc
 
       call self%set_moment(moment)
 
@@ -88,8 +88,12 @@ contains
 
    end function breakterm_init
 
-   impure subroutine breakterm_eval(self, np, y, result, birth, death)
-   !! Evaluate rate of breakage at a given instant.
+   pure subroutine breakterm_eval(self, np, y, result, birth, death)
+   !! Evaluate the rate of breakage at a given instant, using the technique described in
+   !! Section 3.3 of Kumar and Ramkrishna (1996). The birth/source term is computed according
+   !! to a slightly different procedure: the summation is done from the perspective of the
+   !! original particles (the ones that break up), which allows for a simpler and more
+   !! efficient calculation of the particle split fractions.
       class(breakterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: np(:)
@@ -103,6 +107,7 @@ contains
       real(rk), intent(out), optional :: death(:)
          !! vector(ncells) with death term
 
+      real(rk) :: weight(2)
       integer :: i, k
 
       associate (nc => self%grid%ncells, x => self%grid%center, b => self%b, &
@@ -110,7 +115,7 @@ contains
 
          ! Evaluate breakage frequency for all particle sizes
          do concurrent(i=1:nc)
-            b(i) = self%bf(x(i), y)
+            b(i) = self%bfnc(x(i), y)
          end do
 
          ! Death/sink term
@@ -119,12 +124,14 @@ contains
 
          ! Birth/source term
          result_ = ZERO
-         !do concurrent(i=1:nc)
-         do i = 1, nc
-            do k = i, nc
-               result_(i) = result_(i) + weight()*sink(k)
+         do k = 2, nc
+            do i = 1, k - 1
+               weight = daughter_split(i, k)
+               result_(i) = result_(i) + weight(1)*sink(k)
+               result_(i + 1) = result_(i + 1) + weight(2)*sink(k)
             end do
          end do
+
          if (present(birth)) birth = result_
          result_ = result_ - sink
 
@@ -134,48 +141,45 @@ contains
 
    contains
 
-      impure real(rk) function weight()
-      !! Weight fraction of particle k assigned to particle i.
+      pure function daughter_split(i_, k_) result(res)
+      !! Evaluate the fraction of cell k assigned to cells i and (i+1).
+      !! Based on Equation 27, but improved to consider the contribution to cell 1 arising
+      !! from the integral between the left boundary of the grid domain and the center of cell
+      !! 1. For this small region, we can only chose to preserve number or mass (not both). The
+      !! current algorithm implements mass conservation.
+         integer, intent(in) :: i_, k_
+         real(rk) :: res(2)
+         real(rk) :: d0, dm
 
-         real(rk) :: term(2)
-
-         associate (x => self%grid%center, xc => self%grid%center(i), m => self%moment)
-            if (i == 1) then
-               term(1) = dfint(self%grid%left(i), x(i), 0)
-            else
-               term(1) = (dfint(x(i - 1), x(i), 0)*x(i - 1)**m - dfint(x(i - 1), x(i), m))/ &
-                         (x(i - 1)**m - x(i)**m)
+         associate (x => self%grid%center, xo => self%grid%center(k_), m => self%moment)
+            d0 = dfnc_integral(x(i_), x(i_ + 1), xo, 0)
+            dm = dfnc_integral(x(i_), x(i_ + 1), xo, m)
+            res(1) = (d0*x(i_ + 1)**m - dm)/(x(i_ + 1)**m - x(i_)**m)
+            res(2) = d0 - res(1)
+            if (i_ == 1) then
+               !res(1) = res(1) + dfnc_integral(self%grid%left(1), x(1), xo, 0)
+               res(1) = res(1) + dfnc_integral(self%grid%left(1), x(1), xo, m)/x(1)**m
             end if
-
-            if (i == k) then
-               term(2) = ZERO
-            else
-               term(2) = (dfint(x(i), x(i + 1), 0)*x(i + 1)**m - dfint(x(i), x(i + 1), m))/ &
-                         (x(i + 1)**m - x(i)**m)
-            end if
-
-            !print *, i, k, term
-
          end associate
 
-         weight = sum(term)
+      end function daughter_split
 
-      end function weight
-
-      pure real(rk) function dfint(xa, xb, m_) result(res)
-         real(rk), intent(in) :: xa, xb
+      pure real(rk) function dfnc_integral(xa, xb, xo, m_) result(res)
+      !! Numerical approximation to \( \int_{x_a}^{x_b} x^m dfnc(x,x_o,y)dx \).
+      !! Equation 28.
+      !! @todo: The quadrature is done with Simpson's rule, but perhaps a 2nd order method
+      !! such as the trapezoidal rule would work just fine.
+         real(rk), intent(in) :: xa, xb, xo
          integer, intent(in) :: m_
-         real(rk) :: xm
-         xm = (xa + xb)/2
-         associate (xk => self%grid%center(k))
-            res = ( &
-                  xa**m_*self%df(xa, xk, y) + &
-                  xb**m_*self%df(xb, xk, y) + &
-                  xm**m_*self%df(xm, xk, y)*4 &
-                  )*(xb - xa)/6
-         end associate
 
-      end function dfint
+         real(rk) :: xc
+         xc = (xa + xb)/2
+         res = ( &
+               xa**m_*self%dfnc(xa, xo, y) + &
+               xb**m_*self%dfnc(xb, xo, y) + &
+               xc**m_*self%dfnc(xc, xo, y)*4 &
+               )*(xb - xa)/6
+      end function dfnc_integral
 
    end subroutine breakterm_eval
 
