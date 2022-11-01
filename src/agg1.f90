@@ -59,6 +59,8 @@ contains
 
       call self%set_moment(moment)
 
+      self%name = optval(name, "")
+
       if (present(grid)) then
          call self%set_grid(grid)
          call self%aggterm_combinations()
@@ -67,8 +69,6 @@ contains
       else
          self%msg = "Missing 'grid'."
       end if
-
-      self%name = optval(name, "")
 
    end function aggterm_init
 
@@ -85,7 +85,7 @@ contains
       associate (gx => self%grid, nc => self%grid%ncells, m => self%moment)
 
          ! Allocate internal storage arrays
-         allocate (self%array_comb(nc), self%source(nc), self%sink(nc), self%a(nc, nc))
+         allocate (self%array_comb(nc), self%a(nc, nc))
 
          ! Aux vector with 'm'-th power of cell centers
          vcenter = gx%center**m
@@ -147,7 +147,7 @@ contains
 
    end subroutine aggterm_combinations
 
-   pure subroutine aggterm_eval(self, np, y, total, source, sink)
+   pure subroutine aggterm_eval(self, np, y, result, birth, death)
    !! Evaluate rate of aggregation at a given instant.
       class(aggterm), intent(inout) :: self
          !! object
@@ -155,42 +155,44 @@ contains
          !! vector(ncells) with number of particles in cell 'i'
       real(rk), intent(in) :: y(:)
          !! environment vector
-      real(rk), intent(out), optional :: total(:)
-         !! vector(ncells) with sum of birth and death terms
-      real(rk), intent(out), optional :: source(:)
-         !! vector(ncells) with source (birth, +) term
-      real(rk), intent(out), optional :: sink(:)
-         !! vector(ncells) with sink (death, -) term
+      real(rk), intent(out), optional :: result(:)
+         !! vector(ncells) with net rate of change (birth-death)
+      real(rk), intent(out), optional :: birth(:)
+         !! vector(ncells) with birth term
+      real(rk), intent(out), optional :: death(:)
+         !! vector(ncells) with death term
 
       real(rk) :: weight
       integer:: i, j, k, n
 
       associate (gx => self%grid, nc => self%grid%ncells, array_comb => self%array_comb, &
-                 source_ => self%source, sink_ => self%sink, a => self%a)
+                 a => self%a, result_ => self%result)
 
          ! Evaluate aggregation frequency for all particle combinations
          do concurrent(j=1:nc, k=1:nc)
             a(j, k) = self%af(gx%center(j), gx%center(k), y)
          end do
 
-         ! Source/birth term
-         source_ = ZERO
+         ! Birth term
+         result_ = ZERO
          do concurrent(i=1:nc)
             do n = 1, array_comb(i)%size()
                j = array_comb(i)%ia(n)
                k = array_comb(i)%ib(n)
                weight = array_comb(i)%weight(n)
-               source_(i) = source_(i) + &
+               result_(i) = result_(i) + &
                             (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
             end do
          end do
 
-         ! Sink/death term
-         sink_ = np*matmul(a, np)
+         if (present(birth)) birth = result_
 
-         if (present(source)) source = source_
-         if (present(sink)) sink = sink_
-         if (present(total)) total = source_ + sink_
+         ! Death term
+         if (present(death)) death = result_
+         result_ = result_ - np*matmul(a, np)
+
+         if (present(death)) death = death - result_
+         if (present(result)) result = result_
 
       end associate
 

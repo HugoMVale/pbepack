@@ -24,6 +24,8 @@ module basetypes
    !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
       type(grid1), pointer :: grid => null()
          !! pointer to grid object
+      real(rk), allocatable :: result(:)
+         !! vectors(ncelss) holding the result (net rate)
       logical :: inited = .false.
          !! flag initialization
    contains
@@ -34,10 +36,6 @@ module basetypes
    !! Abstract 1D PBE particle term class (aggregation, breakage).
       integer :: moment
          !! moment of 'x' to be conserved upon aggregation
-      real(rk), allocatable :: source(:)
-         !! source(+) term
-      real(rk), allocatable :: sink(:)
-         !! sink(-) term
    contains
       procedure, pass(self) :: set_moment
    end type particleterm
@@ -53,6 +51,7 @@ contains
 
       if (grid%ncells > 0) then
          self%grid => grid
+         allocate (self%result(grid%ncells))
       else
          self%msg = "Invalid 'grid'."
          self%ierr = 1
