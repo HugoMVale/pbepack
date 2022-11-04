@@ -30,14 +30,20 @@ module basetypes
          !! flag initialization
    contains
       procedure, pass(self) :: set_grid
+      procedure, pass(self) :: pbeterm_allocations
    end type pbeterm
 
    type, extends(pbeterm), abstract :: particleterm
    !! Abstract 1D PBE particle term class (aggregation, breakage).
       integer :: moment
          !! moment of 'x' to be conserved upon aggregation
+      real(rk), allocatable :: birth(:)
+         !! vectors(ncelss) holding the birth (source, +) term
+      real(rk), allocatable :: death(:)
+         !! vectors(ncelss) holding the death (sink, -) term
    contains
       procedure, pass(self) :: set_moment
+      procedure, pass(self) :: particleterm_allocations
    end type particleterm
 
 contains
@@ -49,9 +55,8 @@ contains
       type(grid1), intent(in), target :: grid
          !! grid1 object
 
-      if (grid%ncells > 0) then
+      if (grid%ncells > 1) then
          self%grid => grid
-         allocate (self%result(grid%ncells))
       else
          self%msg = "Invalid 'grid'."
          self%ierr = 1
@@ -71,6 +76,40 @@ contains
          self%moment = moment
       else
          self%msg = "Invalid 'moment'. Valid range: moment >= 1."
+         self%ierr = 1
+         error stop self%msg
+      end if
+
+   end subroutine
+
+   pure subroutine pbeterm_allocations(self)
+   !! Allocator arrays 'pbeterm' class.
+      class(pbeterm), intent(inout) :: self
+         !! object
+
+      if (associated(self%grid)) then
+         allocate (self%result(self%grid%ncells))
+      else
+         self%msg = "Allocation failed due to missing grid."
+         self%ierr = 1
+         error stop self%msg
+      end if
+
+   end subroutine
+
+   pure subroutine particleterm_allocations(self)
+   !! Allocator arrays 'particleterm' class.
+      class(particleterm), intent(inout) :: self
+         !! object
+
+      ! Call parent method
+      call self%pbeterm_allocations()
+
+      ! Do own allocations
+      if (associated(self%grid)) then
+         allocate (self%birth(self%grid%ncells), self%death(self%grid%ncells))
+      else
+         self%msg = "Allocation failed due to missing grid."
          self%ierr = 1
          error stop self%msg
       end if

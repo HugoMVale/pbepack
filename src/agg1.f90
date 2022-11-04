@@ -22,6 +22,7 @@ module agg1
          !! array of particle combinations and weights for birth term
    contains
       procedure, pass(self) :: eval => aggterm_eval
+      procedure, pass(self), private :: aggterm_allocations
       procedure, pass(self), private :: aggterm_combinations
    end type aggterm
 
@@ -63,6 +64,7 @@ contains
 
       if (present(grid)) then
          call self%set_grid(grid)
+         call self%aggterm_allocations()
          call self%aggterm_combinations()
          self%inited = .true.
          self%msg = "Initialization completed successfully"
@@ -71,6 +73,27 @@ contains
       end if
 
    end function aggterm_init
+
+   pure subroutine aggterm_allocations(self)
+   !! Allocator arrays 'aggterm' class.
+      class(aggterm), intent(inout) :: self
+         !! object
+
+      ! Call parent method
+      call self%particleterm_allocations()
+
+      ! Do own allocations
+      if (associated(self%grid)) then
+         associate (nc => self%grid%ncells)
+            allocate (self%array_comb(nc), self%a(nc, nc))
+         end associate
+      else
+         self%msg = "Allocation failed due to missing grid."
+         self%ierr = 1
+         error stop self%msg
+      end if
+
+   end subroutine aggterm_allocations
 
    impure subroutine aggterm_combinations(self)
    !! Precompute particle combinations leading to birth and respective weights.
@@ -84,13 +107,10 @@ contains
 
       associate (gx => self%grid, nc => self%grid%ncells, m => self%moment)
 
-         ! Allocate internal storage arrays
-         allocate (self%array_comb(nc), self%a(nc, nc))
-
          ! Aux vector with 'm'-th power of cell centers
          vcenter = gx%center**m
 
-         ! Seach for all combinations of particles i,j leading to the
+         ! Search for all combinations of particles i,j leading to the
          ! birth of a new particle in the region of "influence" of cell k
          call list_comb%new
          do i = 1, nc
@@ -166,7 +186,8 @@ contains
       integer:: i, j, k, n
 
       associate (nc => self%grid%ncells, x => self%grid%center, &
-                 array_comb => self%array_comb, a => self%a, result_ => self%result)
+                 array_comb => self%array_comb, a => self%a, &
+                 birth_ => self%birth, death_ => self%death, result_ => self%result)
 
          ! Evaluate aggregation frequency for all particle combinations
          do concurrent(j=1:nc, k=1:nc)
@@ -174,23 +195,24 @@ contains
          end do
 
          ! Birth term
-         result_ = ZERO
+         birth_ = ZERO
          do concurrent(i=1:nc)
             do n = 1, array_comb(i)%size()
                j = array_comb(i)%ia(n)
                k = array_comb(i)%ib(n)
                weight = array_comb(i)%weight(n)
-               result_(i) = result_(i) + &
-                            (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
+               birth_(i) = birth_(i) + &
+                           (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
             end do
          end do
-         if (present(birth)) birth = result_
+         if (present(birth)) birth = birth_
 
          ! Death term
-         if (present(death)) death = result_
-         result_ = result_ - np*matmul(a, np)
+         death_ = np*matmul(a, np)
+         if (present(death)) death = death_
 
-         if (present(death)) death = death - result_
+         ! Net rate
+         result_ = birth_ - death_
          if (present(result)) result = result_
 
       end associate

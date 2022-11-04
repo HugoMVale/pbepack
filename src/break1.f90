@@ -21,10 +21,9 @@ module break1
          !! vector of breakage frequencies
       real(rk), allocatable :: d(:, :)
          !! matrix of daughter probabilities
-      real(rk), allocatable :: sink(:)
-         !! vector of sink rates
    contains
       procedure, pass(self) :: eval => breakterm_eval
+      procedure, pass(self) :: breakterm_allocations
    end type breakterm
 
    abstract interface
@@ -75,9 +74,7 @@ contains
 
       if (present(grid)) then
          call self%set_grid(grid)
-         associate (nc => self%grid%ncells)
-            allocate (self%b(nc), self%d(nc, nc), self%sink(nc))
-         end associate
+         call self%breakterm_allocations()
          self%inited = .true.
          self%msg = "Initialization completed successfully"
       else
@@ -87,6 +84,27 @@ contains
       self%name = optval(name, "")
 
    end function breakterm_init
+
+   pure subroutine breakterm_allocations(self)
+   !! Allocator arrays 'breakterm' class.
+      class(breakterm), intent(inout) :: self
+         !! object
+
+      ! Call parent method
+      call self%particleterm_allocations()
+
+      ! Do own allocations
+      if (associated(self%grid)) then
+         associate (nc => self%grid%ncells)
+            allocate (self%b(nc), self%d(nc, nc))
+         end associate
+      else
+         self%msg = "Allocation failed due to missing grid."
+         self%ierr = 1
+         error stop self%msg
+      end if
+
+   end subroutine breakterm_allocations
 
    pure subroutine breakterm_eval(self, np, y, result, birth, death)
    !! Evaluate the rate of breakage at a given instant, using the technique described in
@@ -111,7 +129,7 @@ contains
       integer :: i, k
 
       associate (nc => self%grid%ncells, x => self%grid%center, b => self%b, &
-                 result_ => self%result, sink => self%sink)
+                 birth_ => self%birth, death_ => self%death, result_ => self%result)
 
          ! Evaluate breakage frequency for all particle sizes
          do concurrent(i=1:nc)
@@ -119,22 +137,22 @@ contains
          end do
 
          ! Death/sink term
-         sink = b*np
-         if (present(death)) death = sink
+         death_ = b*np
+         if (present(death)) death = death_
 
          ! Birth/source term
-         result_ = ZERO
+         birth_ = ZERO
          do k = 2, nc
             do i = 1, k - 1
                weight = daughter_split(i, k)
-               result_(i) = result_(i) + weight(1)*sink(k)
-               result_(i + 1) = result_(i + 1) + weight(2)*sink(k)
+               birth_(i) = birth_(i) + weight(1)*death_(k)
+               birth_(i + 1) = birth_(i + 1) + weight(2)*death_(k)
             end do
          end do
+         if (present(birth)) birth = birth_
 
-         if (present(birth)) birth = result_
-         result_ = result_ - sink
-
+         ! Net rate
+         result_ = birth_ - death_
          if (present(result)) result = result_
 
       end associate
