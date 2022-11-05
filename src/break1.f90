@@ -19,11 +19,21 @@ module break1
          !! daughter distribution
       real(rk), allocatable :: b(:)
          !! vector of breakage frequencies
-      real(rk), allocatable :: d(:, :)
-         !! matrix of daughter probabilities
+      real(rk), allocatable :: d(:)
+         !! vector of daughter probabilities
+      logical :: update_b = .true.
+         !! flag to select if matrix 'b' should be updated at each step.
+      logical :: empty_b = .true.
+         !! flag indicating state of matrix 'b'.
+      logical :: update_d = .true.
+         !! flag to select if matrix 'd' should be updated at each step.
+      logical :: empty_d = .true.
+         !! flag indicating state of matrix 'd'.
    contains
       procedure, pass(self) :: eval => breakterm_eval
-      procedure, pass(self) :: breakterm_allocations
+      procedure, pass(self), private :: breakterm_allocations
+      procedure, pass(self), private :: compute_b
+      procedure, pass(self), private :: compute_d
    end type breakterm
 
    abstract interface
@@ -54,7 +64,8 @@ module break1
 
 contains
 
-   type(breakterm) function breakterm_init(bfnc, dfnc, moment, grid, name) result(self)
+   type(breakterm) function breakterm_init(bfnc, dfnc, moment, grid, update_b, update_d, &
+                                           name) result(self)
    !! Initialize 'breakterm' object.
       procedure(bfnc1_t) :: bfnc
          !! breakage frequency, \( b(x,y) \)
@@ -64,6 +75,10 @@ contains
          !! moment of 'x' to be conserved upon aggregation
       type(grid1), intent(in), target, optional :: grid
          !! grid1 object
+      logical, intent(in), optional :: update_b
+         !! flag to select if matrix 'b' should be updated at each step
+      logical, intent(in), optional :: update_d
+         !! flag to select if matrix 'd' should be updated at each step
       character(*), intent(in), optional :: name
          !! object name
 
@@ -71,6 +86,9 @@ contains
       self%dfnc => dfnc
 
       call self%set_moment(moment)
+
+      if (present(update_b)) self%update_b = update_b
+      if (present(update_d)) self%update_d = update_d
 
       if (present(grid)) then
          call self%set_grid(grid)
@@ -96,7 +114,7 @@ contains
       ! Do own allocations
       if (associated(self%grid)) then
          associate (nc => self%grid%ncells)
-            allocate (self%b(nc), self%d(nc, nc))
+            allocate (self%b(nc), self%d((nc - 2)*(nc - 1)/2 + 3*(nc - 1)))
          end associate
       else
          self%msg = "Allocation failed due to missing grid."
@@ -128,13 +146,12 @@ contains
       real(rk) :: weight(2)
       integer :: i, k
 
-      associate (nc => self%grid%ncells, x => self%grid%center, b => self%b, &
+      associate (nc => self%grid%ncells, b => self%b, &
                  birth_ => self%birth, death_ => self%death, result_ => self%result)
 
-         ! Evaluate breakage frequency for all particle sizes
-         do concurrent(i=1:nc)
-            b(i) = self%bfnc(x(i), y)
-         end do
+         ! Evaluate breakage frequency and daughter distribution kernels
+         if (self%update_b .or. self%empty_b) call self%compute_b(y)
+         !if (self%update_d .or. self%empty_d) call self%compute_d(y)
 
          ! Death/sink term
          death_ = b*np
@@ -183,10 +200,9 @@ contains
       end function daughter_split
 
       pure real(rk) function dfnc_integral(xa, xb, xo, m_) result(res)
-      !! Numerical approximation to \( \int_{x_a}^{x_b} x^m dfnc(x,x_o,y)dx \).
+      !! Numerical approximation to \( \int_{x_a}^{x_b} x^m dfnc(x,x_o,y)dx \) using Simpson's
+      !! rule (with trapezoidal rule, the mass balance drops to 1e-3).
       !! Equation 28.
-      !! @todo: The quadrature is done with Simpson's rule, but perhaps a 2nd order method
-      !! such as the trapezoidal rule would work just fine.
          real(rk), intent(in) :: xa, xb, xo
          integer, intent(in) :: m_
 
@@ -200,5 +216,54 @@ contains
       end function dfnc_integral
 
    end subroutine breakterm_eval
+
+   pure subroutine compute_b(self, y)
+   !! Compute/update vector of breakage frequencies.
+      class(breakterm), intent(inout) :: self
+         !! object
+      real(rk), intent(in) :: y(:)
+         !! environment vector
+
+      integer :: i
+
+      do concurrent(i=1:self%grid%ncells)
+         self%b(i) = self%bfnc(self%grid%center(i), y)
+      end do
+
+      if (self%empty_b) self%empty_b = .false.
+
+   end subroutine compute_b
+
+   pure subroutine compute_d(self, y)
+   !! Compute/update vector of daughter probabilities.
+   !! The distribution \( d(x,x',y) \) is only defined for \( x \leq x' \), leading to a
+   !! triangular array of values. To avoid using such a 'special' array, the data is flattened
+   !! and packed into a vector.
+   !! @note: not active. Need better concept, covering 'd' and weights.
+      class(breakterm), intent(inout) :: self
+         !! object
+      real(rk), intent(in) :: y(:)
+         !! environment vector
+
+      real(rk) :: xa
+      integer :: i, j, k
+
+      associate (nc => self%grid%ncells, x => self%grid%center)
+      do j = 2, nc
+         do i = 0, j
+            if (i == 0) then
+               xa = self%grid%left(1)
+            else
+               xa = self%grid%center(i)
+            end if
+            k = (j - 2)*(j - 1)/2 + 2*(j - 2) + (i + 1)
+            self%d(k) = self%dfnc(xa, x(j), y)
+         end do
+      end do
+      end associate
+
+      if (self%empty_d) self%empty_d = .false.
+
+   end subroutine compute_d
 
 end module break1

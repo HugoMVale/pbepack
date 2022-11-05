@@ -53,7 +53,8 @@ contains
 
          ! Test different moments
          do moment = 1, 3
-            break = breakterm(bfnc=bconst, dfnc=dfuni, moment=moment, grid=gx)
+            break = breakterm(bfnc=bconst, dfnc=dfuni, moment=moment, grid=gx, &
+                              update_b=.false.)
             np = 0
             np(nc) = 1
             y = 0._rk
