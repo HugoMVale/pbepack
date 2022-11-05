@@ -20,10 +20,15 @@ module agg1
          !! matrix of aggregation frequencies
       type(combarray), allocatable, private :: array_comb(:)
          !! array of particle combinations and weights for birth term
+      logical :: update_a = .true.
+         !! flag to select if matrix 'a' should be updated at each step.
+      logical :: empty_a = .true.
+         !! flag indicating state of matrix 'a'.
    contains
       procedure, pass(self) :: eval => aggterm_eval
       procedure, pass(self), private :: aggterm_allocations
-      procedure, pass(self), private :: aggterm_combinations
+      procedure, pass(self), private :: compute_combinations
+      procedure, pass(self), private :: compute_a
    end type aggterm
 
    abstract interface
@@ -45,7 +50,7 @@ module agg1
 
 contains
 
-   type(aggterm) function aggterm_init(afnc, moment, grid, name) result(self)
+   type(aggterm) function aggterm_init(afnc, moment, grid, update_a, name) result(self)
    !! Initialize 'aggterm' object.
       procedure(afnc1_t) :: afnc
          !! aggregation frequency, \( a(x,x',y) \)
@@ -53,6 +58,8 @@ contains
          !! moment of \( x \) to be conserved upon aggregation
       type(grid1), intent(in), optional :: grid
          !! grid1 object
+      logical, intent(in), optional :: update_a
+         !! flag to select if matrix 'a' should be updated at each step
       character(*), intent(in), optional :: name
          !! object name
 
@@ -60,12 +67,14 @@ contains
 
       call self%set_moment(moment)
 
+      if (present(update_a)) self%update_a = update_a
+
       self%name = optval(name, "")
 
       if (present(grid)) then
          call self%set_grid(grid)
          call self%aggterm_allocations()
-         call self%aggterm_combinations()
+         call self%compute_combinations()
          self%inited = .true.
          self%msg = "Initialization completed successfully"
       else
@@ -74,28 +83,85 @@ contains
 
    end function aggterm_init
 
-   pure subroutine aggterm_allocations(self)
-   !! Allocator arrays 'aggterm' class.
+   pure subroutine aggterm_eval(self, np, y, result, birth, death)
+   !! Evaluate rate of aggregation at a given instant.
       class(aggterm), intent(inout) :: self
          !! object
+      real(rk), intent(in) :: np(:)
+         !! vector(ncells) with number of particles in cell 'i'
+      real(rk), intent(in) :: y(:)
+         !! environment vector
+      real(rk), intent(out), optional :: result(:)
+         !! vector(ncells) with net rate of change (birth-death)
+      real(rk), intent(out), optional :: birth(:)
+         !! vector(ncells) with birth term
+      real(rk), intent(out), optional :: death(:)
+         !! vector(ncells) with death term
 
-      ! Call parent method
-      call self%particleterm_allocations()
+      real(rk) :: weight
+      integer:: i, j, k, n
 
-      ! Do own allocations
-      if (associated(self%grid)) then
-         associate (nc => self%grid%ncells)
-            allocate (self%array_comb(nc), self%a(nc, nc))
-         end associate
-      else
-         self%msg = "Allocation failed due to missing grid."
-         self%ierr = 1
-         error stop self%msg
-      end if
+      associate (nc => self%grid%ncells, &
+                 array_comb => self%array_comb, a => self%a, &
+                 birth_ => self%birth, death_ => self%death, result_ => self%result)
 
-   end subroutine aggterm_allocations
+         ! Evaluate aggregation frequency for all particle combinations
+         if (self%update_a .or. self%empty_a) call self%compute_a(y)
 
-   impure subroutine aggterm_combinations(self)
+         ! Birth term
+         birth_ = ZERO
+         do concurrent(i=1:nc)
+            do n = 1, array_comb(i)%size()
+               j = array_comb(i)%ia(n)
+               k = array_comb(i)%ib(n)
+               weight = array_comb(i)%weight(n)
+               birth_(i) = birth_(i) + &
+                           (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
+            end do
+         end do
+         if (present(birth)) birth = birth_
+
+         ! Death term
+         death_ = np*matmul(a, np)
+         if (present(death)) death = death_
+
+         ! Net rate
+         result_ = birth_ - death_
+         if (present(result)) result = result_
+
+      end associate
+
+   end subroutine aggterm_eval
+
+   pure subroutine compute_a(self, y)
+   !! Compute/update array of aggregation frequencies.
+      class(aggterm), intent(inout) :: self
+         !! object
+      real(rk), intent(in) :: y(:)
+         !! environment vector
+
+      integer :: i, j
+
+      ! The array is symmetric
+      ! Can be improved with symmetric matrix from Lapack
+      associate (nc => self%grid%ncells, x => self%grid%center)
+         do j = 1, nc
+            do i = j, nc
+               self%a(i, j) = self%afnc(x(i), x(j), y)
+            end do
+         end do
+         do j = 2, nc
+            do i = 1, j - 1
+               self%a(i, j) = self%a(j, i)
+            end do
+         end do
+      end associate
+
+      if (self%empty_a) self%empty_a = .false.
+
+   end subroutine compute_a
+
+   impure subroutine compute_combinations(self)
    !! Precompute particle combinations leading to birth and respective weights.
       class(aggterm), intent(inout) :: self
          !! object
@@ -165,59 +231,28 @@ contains
          end do
       end associate
 
-   end subroutine aggterm_combinations
+   end subroutine compute_combinations
 
-   pure subroutine aggterm_eval(self, np, y, result, birth, death)
-   !! Evaluate rate of aggregation at a given instant.
+   pure subroutine aggterm_allocations(self)
+   !! Allocate arrays.
       class(aggterm), intent(inout) :: self
          !! object
-      real(rk), intent(in) :: np(:)
-         !! vector(ncells) with number of particles in cell 'i'
-      real(rk), intent(in) :: y(:)
-         !! environment vector
-      real(rk), intent(out), optional :: result(:)
-         !! vector(ncells) with net rate of change (birth-death)
-      real(rk), intent(out), optional :: birth(:)
-         !! vector(ncells) with birth term
-      real(rk), intent(out), optional :: death(:)
-         !! vector(ncells) with death term
 
-      real(rk) :: weight
-      integer:: i, j, k, n
+      ! Call parent method
+      call self%particleterm_allocations()
 
-      associate (nc => self%grid%ncells, x => self%grid%center, &
-                 array_comb => self%array_comb, a => self%a, &
-                 birth_ => self%birth, death_ => self%death, result_ => self%result)
+      ! Do own allocations
+      if (associated(self%grid)) then
+         associate (nc => self%grid%ncells)
+            allocate (self%array_comb(nc), self%a(nc, nc))
+         end associate
+      else
+         self%msg = "Allocation failed due to missing grid."
+         self%ierr = 1
+         error stop self%msg
+      end if
 
-         ! Evaluate aggregation frequency for all particle combinations
-         do concurrent(j=1:nc, k=1:nc)
-            a(j, k) = self%afnc(x(j), x(k), y)
-         end do
-
-         ! Birth term
-         birth_ = ZERO
-         do concurrent(i=1:nc)
-            do n = 1, array_comb(i)%size()
-               j = array_comb(i)%ia(n)
-               k = array_comb(i)%ib(n)
-               weight = array_comb(i)%weight(n)
-               birth_(i) = birth_(i) + &
-                           (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
-            end do
-         end do
-         if (present(birth)) birth = birth_
-
-         ! Death term
-         death_ = np*matmul(a, np)
-         if (present(death)) death = death_
-
-         ! Net rate
-         result_ = birth_ - death_
-         if (present(result)) result = result_
-
-      end associate
-
-   end subroutine aggterm_eval
+   end subroutine aggterm_allocations
 
    pure real(rk) function delta_kronecker(i, j)
    !! Delta kronecker \( \delta_{i,j} \).
