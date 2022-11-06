@@ -25,9 +25,9 @@ module basetypes
       type(grid1), pointer :: grid => null()
          !! pointer to grid object
       real(rk), allocatable :: result(:)
-         !! vectors(ncelss) holding the result (net rate)
+         !! vectors(ncells) holding the result (net rate)
       logical :: inited = .false.
-         !! flag initialization
+         !! initialization flag
    contains
       procedure, pass(self) :: set_grid
       procedure, pass(self) :: pbeterm_allocations
@@ -36,11 +36,11 @@ module basetypes
    type, extends(pbeterm), abstract :: particleterm
    !! Abstract 1D PBE particle term class (aggregation, breakage).
       integer :: moment
-         !! moment of 'x' to be conserved upon aggregation
+         !! moment of 'x' to be conserved upon aggregation/breakage (moment >= 1)
       real(rk), allocatable :: birth(:)
-         !! vectors(ncelss) holding the birth (source, +) term
+         !! vectors(ncells) holding the birth (source, +) term
       real(rk), allocatable :: death(:)
-         !! vectors(ncelss) holding the death (sink, -) term
+         !! vectors(ncells) holding the death (sink, -) term
    contains
       procedure, pass(self) :: set_moment
       procedure, pass(self) :: particleterm_allocations
