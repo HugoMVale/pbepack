@@ -72,7 +72,7 @@ contains
       procedure(dfnc1_t) :: dfnc
          !! daughter distribution, \( d(x,x',y) \)
       integer, intent(in) :: moment
-         !! moment of 'x' to be conserved upon breakage (moment >= 1)
+         !! moment of 'x' to be conserved upon breakage (>0)
       type(grid1), intent(in), target, optional :: grid
          !! grid1 object
       logical, intent(in), optional :: update_b

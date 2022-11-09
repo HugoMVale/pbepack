@@ -55,7 +55,7 @@ contains
       procedure(afnc1_t) :: afnc
          !! aggregation frequency, \( a(x,x',y) \)
       integer, intent(in) :: moment
-         !! moment of \( x \) to be conserved upon aggregation
+         !! moment of \( x \) to be conserved upon aggregation (>0)
       type(grid1), intent(in), optional :: grid
          !! grid1 object
       logical, intent(in), optional :: update_a
@@ -163,6 +163,8 @@ contains
 
    impure subroutine compute_combinations(self)
    !! Precompute particle combinations leading to birth and respective weights.
+   !! @note: This procedure is impure because some 'ftlList' methods are impure. Otherwise,
+   !! this procedure is "pure".
       class(aggterm), intent(inout) :: self
          !! object
 
