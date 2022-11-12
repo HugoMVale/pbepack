@@ -2,11 +2,11 @@ module test_break1
 !! Test for module 'break1d' using test-drive.
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use stdlib_strings, only: to_string
-   use real_kinds, only: rk
-   use break1, only: breakterm
-   use grids, only: grid1
+   use pbepack_kinds, only: rk
+   use pbepack_break1, only: breakterm
+   use hrweno_grids, only: grid1
    use utils_tests, only: bconst, duniform
+   use stdlib_strings, only: to_string
    implicit none
    private
 

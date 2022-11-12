@@ -1,10 +1,10 @@
-module agg1
+module pbepack_agg1
 !! This module implements derived types and procedures to compute the aggregation term
 !! for 1D PBEs.
-   use real_kinds
-   use basetypes, only: particleterm
-   use grids, only: grid1
-   use aggtypes, only: comblist, combarray
+   use pbepack_kinds
+   use pbepack_basetypes, only: particleterm
+   use pbepack_aggtypes, only: comblist, combarray
+   use hrweno_grids, only: grid1
    implicit none
    private
 
@@ -264,4 +264,4 @@ contains
 
    end function delta_kronecker
 
-end module agg1
+end module pbepack_agg1

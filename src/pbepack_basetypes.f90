@@ -1,8 +1,8 @@
-module basetypes
+module pbepack_basetypes
 !!   This module implements a number of (abstract) derived data types which form the basis for
 !! the other derived types in this package.
-   use real_kinds, only: rk
-   use grids, only: grid1
+   use pbepack_kinds
+   use hrweno_grids, only: grid1
    use stdlib_optval, only: optval
    implicit none
    private
@@ -136,4 +136,4 @@ contains
 
    end subroutine
 
-end module basetypes
+end module pbepack_basetypes

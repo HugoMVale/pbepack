@@ -1,6 +1,6 @@
-module quadratures
-   use real_kinds, only: rk
-   use grids, only: grid1
+module pbepack_quadratures
+   use pbepack_kinds
+   use hrweno_grids, only: grid1
    use stdlib_optval, only: optval
    implicit none
    private
@@ -112,4 +112,4 @@ contains
 
    end function quad1_r1
 
-end module quadratures
+end module pbepack_quadratures

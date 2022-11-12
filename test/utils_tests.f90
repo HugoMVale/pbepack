@@ -1,6 +1,6 @@
 module utils_tests
 !! Utilities for tests.
-   use real_kinds
+   use pbepack_kinds
    use stdlib_optval, only: optval
    implicit none
 

@@ -18,6 +18,7 @@ program tester
                         select_suite, run_selected, get_argument
    use test_agg1, only: collect_tests_agg1
    use test_break1, only: collect_tests_break1
+   use test_pbe1, only: collect_tests_pbe1
 
    implicit none
 
@@ -30,7 +31,8 @@ program tester
 
    testsuites = [ &
                 new_testsuite("aggregation 1D", collect_tests_agg1), &
-                new_testsuite("breakage 1D", collect_tests_break1) &
+                new_testsuite("breakage 1D", collect_tests_break1), &
+                new_testsuite("PBE 1D", collect_tests_pbe1) &
                 ]
 
    call get_argument(1, suite_name)

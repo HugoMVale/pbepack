@@ -1,7 +1,7 @@
 module pbepack
-   use pbe, only: pbe1
-   use agg1, only: aggterm
-   use break1, only: breakterm
+   use pbepack_pbe1, only: pbe1
+   use pbepack_agg1, only: aggterm
+   use pbepack_break1, only: breakterm
    implicit none
    private
 

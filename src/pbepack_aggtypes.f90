@@ -1,7 +1,7 @@
-module aggtypes
+module pbepack_aggtypes
 !!   This module implements two derived data types to store information about particle
 !! combinations, as required for evaluating aggregation birth terms.
-   use real_kinds, only: rk
+   use pbepack_kinds
    use ftlListIntModule
    use ftlListDoubleModule
    implicit none
@@ -109,4 +109,4 @@ contains
       res = size(self%ia)
    end function array_size
 
-end module aggtypes
+end module pbepack_aggtypes
