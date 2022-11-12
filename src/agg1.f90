@@ -5,8 +5,6 @@ module agg1
    use basetypes, only: particleterm
    use grids, only: grid1
    use aggtypes, only: comblist, combarray
-   use stdlib_optval, only: optval
-
    implicit none
    private
 
@@ -15,7 +13,7 @@ module agg1
    type, extends(particleterm) :: aggterm
    !! Aggregation term class.
       procedure(afnc1_t), nopass, pointer :: afnc => null()
-         !! aggregation frequency
+         !! aggregation frequency function
       real(rk), allocatable :: a(:, :)
          !! matrix of aggregation frequencies
       type(combarray), allocatable, private :: array_comb(:)
@@ -53,7 +51,7 @@ contains
    type(aggterm) function aggterm_init(afnc, moment, grid, update_a, name) result(self)
    !! Initialize 'aggterm' object.
       procedure(afnc1_t) :: afnc
-         !! aggregation frequency, \( a(x,x',y) \)
+         !! aggregation frequency function, \( a(x,x',y) \)
       integer, intent(in) :: moment
          !! moment of \( x \) to be conserved upon aggregation (>0)
       type(grid1), intent(in), optional :: grid
@@ -64,12 +62,9 @@ contains
          !! object name
 
       self%afnc => afnc
-
       call self%set_moment(moment)
-
       if (present(update_a)) self%update_a = update_a
-
-      self%name = optval(name, "")
+      call self%set_name(name)
 
       if (present(grid)) then
          call self%set_grid(grid)
@@ -164,7 +159,7 @@ contains
    impure subroutine compute_combinations(self)
    !! Precompute particle combinations leading to birth and respective weights.
    !! @note: This procedure is impure because some 'ftlList' methods are impure. Otherwise,
-   !! this procedure is "pure".
+   !! this procedure could be "pure".
       class(aggterm), intent(inout) :: self
          !! object
 
@@ -249,9 +244,7 @@ contains
             allocate (self%array_comb(nc), self%a(nc, nc))
          end associate
       else
-         self%msg = "Allocation failed due to missing grid."
-         self%ierr = 1
-         error stop self%msg
+         call self%error_msg("Allocation failed due to missing grid.")
       end if
 
    end subroutine aggterm_allocations
@@ -259,9 +252,9 @@ contains
    pure real(rk) function delta_kronecker(i, j)
    !! Delta kronecker \( \delta_{i,j} \).
       integer, intent(in) :: i
-       !! integer i
+         !! integer i
       integer, intent(in) :: j
-       !! integer j
+         !! integer j
 
       if (i == j) then
          delta_kronecker = ONE

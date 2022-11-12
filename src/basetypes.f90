@@ -3,13 +3,14 @@ module basetypes
 !! the other derived types in this package.
    use real_kinds, only: rk
    use grids, only: grid1
+   use stdlib_optval, only: optval
    implicit none
    private
 
    public :: base, pbeterm, particleterm
 
    type, abstract :: base
-   !! Base abstract class.
+   !! Abstract 'base' class.
       character(:), allocatable :: name
          !! object name
       character(:), allocatable :: msg
@@ -18,18 +19,21 @@ module basetypes
          !! error status
       logical :: verbose = .false.
          !! verbose flag
+      type(grid1), pointer :: grid => null()
+         !! pointer to grid object
+   contains
+      procedure, pass(self) :: set_grid
+      procedure, pass(self) :: set_name
+      procedure, pass(self) :: error_msg
    end type base
 
    type, extends(base), abstract :: pbeterm
    !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
-      type(grid1), pointer :: grid => null()
-         !! pointer to grid object
       real(rk), allocatable :: result(:)
          !! vectors(ncells) holding the result (net rate)
       logical :: inited = .false.
          !! initialization flag
    contains
-      procedure, pass(self) :: set_grid
       procedure, pass(self) :: pbeterm_allocations
    end type pbeterm
 
@@ -50,7 +54,7 @@ contains
 
    subroutine set_grid(self, grid)
    !! Setter method for grid.
-      class(pbeterm), intent(inout) :: self
+      class(base), intent(inout) :: self
          !! object
       type(grid1), intent(in), target :: grid
          !! grid1 object
@@ -58,10 +62,32 @@ contains
       if (grid%ncells > 1) then
          self%grid => grid
       else
-         self%msg = "Invalid 'grid'."
-         self%ierr = 1
-         error stop self%msg
+         call self%error_msg("Invalid 'grid'.")
       end if
+
+   end subroutine
+
+   pure subroutine error_msg(self, msg)
+   !! Error method.
+      class(base), intent(inout) :: self
+         !! object
+      character(*), intent(in) :: msg
+         !! message
+
+      self%msg = msg
+      self%ierr = 1
+      error stop self%msg
+
+   end subroutine
+
+   pure subroutine set_name(self, name)
+   !! Setter method for name.
+      class(base), intent(inout) :: self
+         !! object
+      character(*), intent(in), optional :: name
+         !! name
+
+      self%name = optval(name, "")
 
    end subroutine
 
@@ -75,30 +101,26 @@ contains
       if (moment > 0) then
          self%moment = moment
       else
-         self%msg = "Invalid 'moment'. Valid range: moment >= 1."
-         self%ierr = 1
-         error stop self%msg
+         call self%error_msg("Invalid 'moment'. Valid range: moment >= 1.")
       end if
 
    end subroutine
 
    pure subroutine pbeterm_allocations(self)
-   !! Allocator arrays 'pbeterm' class.
+   !! Allocator for arrays of 'pbeterm' class.
       class(pbeterm), intent(inout) :: self
          !! object
 
       if (associated(self%grid)) then
          allocate (self%result(self%grid%ncells))
       else
-         self%msg = "Allocation failed due to missing grid."
-         self%ierr = 1
-         error stop self%msg
+         call self%error_msg("Allocation failed due to missing grid.")
       end if
 
    end subroutine
 
    pure subroutine particleterm_allocations(self)
-   !! Allocator arrays 'particleterm' class.
+   !! Allocator for arrays of 'particleterm' class.
       class(particleterm), intent(inout) :: self
          !! object
 
@@ -109,9 +131,7 @@ contains
       if (associated(self%grid)) then
          allocate (self%birth(self%grid%ncells), self%death(self%grid%ncells))
       else
-         self%msg = "Allocation failed due to missing grid."
-         self%ierr = 1
-         error stop self%msg
+         call self%error_msg("Allocation failed due to missing grid.")
       end if
 
    end subroutine

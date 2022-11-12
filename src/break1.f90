@@ -4,8 +4,6 @@ module break1
    use real_kinds
    use basetypes, only: particleterm
    use grids, only: grid1
-   use stdlib_optval, only: optval
-
    implicit none
    private
 
@@ -14,9 +12,9 @@ module break1
    type, extends(particleterm) :: breakterm
    !! Breakage term class.
       procedure(bfnc1_t), nopass, pointer :: bfnc => null()
-         !! breakage frequency
+         !! breakage frequency function
       procedure(dfnc1_t), nopass, pointer :: dfnc => null()
-         !! daughter distribution
+         !! daughter distribution function
       real(rk), allocatable :: b(:)
          !! vector of breakage frequencies
       real(rk), allocatable :: d(:)
@@ -68,9 +66,9 @@ contains
                                            name) result(self)
    !! Initialize 'breakterm' object.
       procedure(bfnc1_t) :: bfnc
-         !! breakage frequency, \( b(x,y) \)
+         !! breakage frequency function, \( b(x,y) \)
       procedure(dfnc1_t) :: dfnc
-         !! daughter distribution, \( d(x,x',y) \)
+         !! daughter distribution function, \( d(x,x',y) \)
       integer, intent(in) :: moment
          !! moment of 'x' to be conserved upon breakage (>0)
       type(grid1), intent(in), target, optional :: grid
@@ -84,9 +82,8 @@ contains
 
       self%bfnc => bfnc
       self%dfnc => dfnc
-
       call self%set_moment(moment)
-
+      call self%set_name(name)
       if (present(update_b)) self%update_b = update_b
       if (present(update_d)) self%update_d = update_d
 
@@ -98,8 +95,6 @@ contains
       else
          self%msg = "Missing 'grid'."
       end if
-
-      self%name = optval(name, "")
 
    end function breakterm_init
 
@@ -117,9 +112,7 @@ contains
             allocate (self%b(nc), self%d((nc - 2)*(nc - 1)/2 + 3*(nc - 1)))
          end associate
       else
-         self%msg = "Allocation failed due to missing grid."
-         self%ierr = 1
-         error stop self%msg
+         call self%error_msg("Allocation failed due to missing grid.")
       end if
 
    end subroutine breakterm_allocations
