@@ -2,6 +2,7 @@ module pbepack_agg1
 !! This module implements derived types and procedures to compute the aggregation term
 !! for 1D PBEs.
    use pbepack_kinds
+   use pbepack_math, only: delta_kronecker, spmatrix
    use pbepack_basetypes, only: particleterm
    use pbepack_aggtypes, only: comblist, combarray
    use hrweno_grids, only: grid1
@@ -14,7 +15,7 @@ module pbepack_agg1
    !! Aggregation term class.
       procedure(afnc1_t), nopass, pointer :: afnc => null()
          !! aggregation frequency function
-      real(rk), allocatable :: a(:, :)
+      type(spmatrix) :: a
          !! matrix of aggregation frequencies
       type(combarray), allocatable, private :: array_comb(:)
          !! array of particle combinations and weights for birth term
@@ -111,13 +112,14 @@ contains
                k = array_comb(i)%ib(n)
                weight = array_comb(i)%weight(n)
                birth_(i) = birth_(i) + &
-                           (ONE - HALF*delta_kronecker(j, k))*weight*a(j, k)*np(j)*np(k)
+                           (ONE - HALF*delta_kronecker(j, k))*weight* &
+                           a%ap(j + k*(k - 1)/2)*np(j)*np(k)
             end do
          end do
          if (present(birth)) birth = birth_
 
          ! Death term
-         death_ = np*matmul(a, np)
+         death_ = np*a%multvec(np)
          if (present(death)) death = death_
 
          ! Net rate
@@ -137,17 +139,12 @@ contains
 
       integer :: i, j
 
-      ! The array is symmetric
-      ! Can be improved with symmetric matrix from Lapack
+      ! The array is symmetric, packed as upper triangle
+      ! https://netlib.org/lapack/lug/node123.html
       associate (nc => self%grid%ncells, x => self%grid%center)
          do j = 1, nc
-            do i = j, nc
-               self%a(i, j) = self%afnc(x(i), x(j), y)
-            end do
-         end do
-         do j = 2, nc
-            do i = 1, j - 1
-               self%a(i, j) = self%a(j, i)
+            do i = 1, j
+               self%a%ap(i + j*(j - 1)/2) = self%afnc(x(i), x(j), y)
             end do
          end do
       end associate
@@ -241,27 +238,13 @@ contains
       ! Do own allocations
       if (associated(self%grid)) then
          associate (nc => self%grid%ncells)
-            allocate (self%array_comb(nc), self%a(nc, nc))
+            allocate (self%array_comb(nc))
+            self%a = spmatrix(nc)
          end associate
       else
          call self%error_msg("Allocation failed due to missing grid.")
       end if
 
    end subroutine aggterm_allocations
-
-   pure real(rk) function delta_kronecker(i, j)
-   !! Delta kronecker \( \delta_{i,j} \).
-      integer, intent(in) :: i
-         !! integer i
-      integer, intent(in) :: j
-         !! integer j
-
-      if (i == j) then
-         delta_kronecker = ONE
-      else
-         delta_kronecker = ZERO
-      end if
-
-   end function delta_kronecker
 
 end module pbepack_agg1
