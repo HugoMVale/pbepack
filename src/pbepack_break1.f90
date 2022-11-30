@@ -1,5 +1,5 @@
 module pbepack_break1
-!! Thi modules implements derived types and procedures to compute the breakage term
+!! This module implements derived types and procedures to compute the breakage term
 !! for 1D PBEs.
    use pbepack_kinds
    use pbepack_basetypes, only: particleterm
