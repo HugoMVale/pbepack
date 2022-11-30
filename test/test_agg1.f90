@@ -2,7 +2,7 @@ module test_agg1
 !! Test for module 'agg1d' using test-drive.
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use pbepack_kinds, only: rk
+   use pbepack_kinds
    use pbepack_agg1, only: aggterm
    use hrweno_grids, only: grid1
    use utils_tests
@@ -22,17 +22,16 @@ contains
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
-                  new_unittest("mass conservation", test_mass_conservation), &
+                  new_unittest("moment conservation", test_moment_conservation), &
                   new_unittest("analytical solution, case 1", test_case1) &
-                  !new_unittest("wenok with non-uniform grid", test_wenok_nonuniform) &
                   ]
 
    end subroutine
 
-   subroutine test_mass_conservation(error)
+   subroutine test_moment_conservation(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 100
+      integer, parameter :: nc = 200
       type(grid1) :: gx
       type(aggterm) :: agg
       real(rk), dimension(nc) :: np, birth, death
@@ -53,10 +52,10 @@ contains
 
          ! Test different moments
          do moment = 1, 3
-            agg = aggterm(afnc=aconst, moment=moment, grid=gx, update_a=.false.)
-            np = 0
-            np(1:nc/2 - 1) = 1
-            y = 0._rk
+            agg = aggterm(afnc=aprod, moment=moment, grid=gx, update_a=.false.)
+            np = ZERO
+            np(1:nc/2 - 1) = ONE
+            y = ZERO
             call agg%eval(np, y, birth=birth, death=death)
 
             moment_birth_0 = sum(birth)
@@ -64,10 +63,10 @@ contains
             moment_birth_m = sum(birth*gx%center**moment)
             moment_death_m = sum(death*gx%center**moment)
 
-            call check(error, moment_birth_m, moment_death_m, &
-                       rel=.true., thr=1e-14_rk)
-            call check(error, moment_birth_0, moment_death_0/2, &
-                       rel=.true., thr=1e-14_rk)
+            call check(error, moment_birth_0, moment_death_0/2, rel=.true., &
+                       thr=1e-14_rk)
+            call check(error, moment_birth_m, moment_death_m, rel=.true., &
+                       thr=1e-14_rk)
 
             if (allocated(error) .or. verbose) then
                print *
@@ -85,7 +84,7 @@ contains
       print '("Time = ",f8.5," seconds.")', (tend - t0)
       print *
 
-   end subroutine test_mass_conservation
+   end subroutine test_moment_conservation
 
    subroutine test_case1(error)
       type(error_type), allocatable, intent(out) :: error

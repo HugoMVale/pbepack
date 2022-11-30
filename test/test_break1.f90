@@ -2,7 +2,7 @@ module test_break1
 !! Test for module 'break1d' using test-drive.
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use pbepack_kinds, only: rk
+   use pbepack_kinds
    use pbepack_break1, only: breakterm
    use hrweno_grids, only: grid1
    use utils_tests, only: bconst, duniform
@@ -22,17 +22,16 @@ contains
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
-                  new_unittest("mass conservation", test_mass_conservation) &
+                  new_unittest("moment conservation", test_moment_conservation) &
                   !new_unittest("analytical solution, case 1", test_case1) &
-                  !new_unittest("wenok with non-uniform grid", test_wenok_nonuniform) &
                   ]
 
    end subroutine
 
-   subroutine test_mass_conservation(error)
+   subroutine test_moment_conservation(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 500
+      integer, parameter :: nc = 200
       type(grid1) :: gx
       type(breakterm) :: break
       real(rk), dimension(nc) :: np, birth, death
@@ -55,9 +54,9 @@ contains
          do moment = 1, 3
             break = breakterm(bfnc=bconst, dfnc=dfuni, moment=moment, grid=gx, &
                               update_b=.false.)
-            np = 0
-            np(nc) = 1
-            y = 0._rk
+            np = ZERO
+            np(nc) = ONE
+            y = ZERO
             call break%eval(np, y, birth=birth, death=death)
 
             moment_birth_0 = sum(birth)
@@ -65,10 +64,10 @@ contains
             moment_birth_m = sum(birth*gx%center**moment)
             moment_death_m = sum(death*gx%center**moment)
 
-            call check(error, moment_birth_m, moment_death_m, &
-                       rel=.true., thr=1e-8_rk)
             call check(error, moment_birth_0, moment_death_0*2, &
                        rel=.true., thr=1e-2_rk)
+            call check(error, moment_birth_m, moment_death_m, &
+                       rel=.true., thr=1e-8_rk)
 
             if (allocated(error) .or. verbose) then
                print *
@@ -96,6 +95,6 @@ contains
          res = duniform(xd, xo, y, moment)
       end function
 
-   end subroutine test_mass_conservation
+   end subroutine test_moment_conservation
 
 end module test_break1
