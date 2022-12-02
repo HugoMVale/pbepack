@@ -2,7 +2,8 @@ module pbepack_agg1
 !! This module implements derived types and procedures to compute the aggregation term
 !! for 1D PBEs.
    use pbepack_kinds
-   use pbepack_math, only: delta_kronecker, spmatrix
+   use pbepack_math, only: delta_kronecker
+   use pbepack_algebra, only: spmatrix
    use pbepack_basetypes, only: particleterm
    use pbepack_aggtypes, only: comblist, combarray
    use hrweno_grids, only: grid1
@@ -112,8 +113,7 @@ contains
                k = array_comb(i)%ib(n)
                weight = array_comb(i)%weight(n)
                birth_(i) = birth_(i) + &
-                           (ONE - HALF*delta_kronecker(j, k))*weight* &
-                           a%ap(j + k*(k - 1)/2)*np(j)*np(k)
+                           (ONE - HALF*delta_kronecker(j, k))*weight*a%get(j, k)*np(j)*np(k)
             end do
          end do
          if (present(birth)) birth = birth_
@@ -139,12 +139,11 @@ contains
 
       integer :: i, j
 
-      ! The array is symmetric, packed as upper triangle
-      ! https://netlib.org/lapack/lug/node123.html
+      ! The array is symmetric
       associate (nc => self%grid%ncells, x => self%grid%center)
          do j = 1, nc
             do i = 1, j
-               self%a%ap(i + j*(j - 1)/2) = self%afnc(x(i), x(j), y)
+               call self%a%set(i, j, self%afnc(x(i), x(j), y))
             end do
          end do
       end associate
