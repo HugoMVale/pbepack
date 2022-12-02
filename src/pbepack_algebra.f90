@@ -11,7 +11,7 @@ module pbepack_algebra
       real(rk), allocatable :: ap(:)
          !! vector with array values in packed storage format
       integer :: n
-         !! number of rows/columns
+         !! number of rows or columns
       character(1) :: uplo = "u"
          !! flag to specify whether the upper(u) or lower(l) triangle is supplied
    contains
@@ -29,7 +29,7 @@ contains
    pure type(spmatrix) function spmatrix_init(n) result(res)
       !! Initialize 'spmatrix' object.
       integer, intent(in) :: n
-         !! number of rows/columns
+         !! number of rows or columns
 
       if (n > 0) then
          res%n = n
@@ -52,16 +52,16 @@ contains
 
    end function spmatrix_get
 
-   pure subroutine spmatrix_set(self, i, j, a)
-   !! Set value of \( a_{i,j} \).
+   pure subroutine spmatrix_set(self, i, j, x)
+   !! Set value of \( a_{i,j} = x \).
       class(spmatrix), intent(inout) :: self
          !! object
       integer, intent(in) :: i, j
          !! index
-      real(rk), intent(in) :: a
+      real(rk), intent(in) :: x
          !! value
 
-      self%ap(i + j*(j - 1)/2) = a
+      self%ap(i + j*(j - 1)/2) = x
 
    end subroutine spmatrix_set
 
@@ -73,7 +73,7 @@ contains
       !! where x is an n element vector and A is a n*n symmetric matrix.
       !! Source: https://netlib.org/lapack/lug/node123.html
       class(spmatrix), intent(in) :: self
-            !! symmetric array supplied)
+            !! symmetric array(n,n)
       real(rk), intent(in) :: x(:)
             !! vector(n)
       real(rk) :: y(size(x))
