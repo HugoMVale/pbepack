@@ -14,22 +14,22 @@ module pbepack_agg1
 
    type, extends(particleterm) :: aggterm
    !! Aggregation term class.
+      private
       procedure(afnc1_t), nopass, pointer :: afnc => null()
          !! aggregation frequency function
       type(spmatrix) :: a
          !! matrix of aggregation frequencies
-      type(combarray), allocatable, private :: array_comb(:)
+      type(combarray), allocatable :: array_comb(:)
          !! array of particle combinations and weights for birth term
       logical :: update_a = .true.
          !! flag to select if matrix **a** should be updated at each step.
       logical :: empty_a = .true.
          !! flag indicating state of matrix **a**.
    contains
-      procedure, pass(self) :: eval => aggterm_eval
-      procedure, pass(self) :: init2 => aggterm_init2
-      procedure, pass(self), private :: aggterm_allocations
-      procedure, pass(self), private :: compute_combinations
-      procedure, pass(self), private :: compute_a
+      procedure, pass(self), public :: eval => aggterm_eval
+      procedure, pass(self), public :: init2 => aggterm_init2
+      procedure, pass(self) :: compute_combinations
+      procedure, pass(self) :: compute_a
    end type aggterm
 
    abstract interface
@@ -60,15 +60,14 @@ contains
       type(grid1), intent(in), optional :: grid
          !! 'grid1' object
       logical, intent(in), optional :: update_a
-         !! flag to select if matrix **a** should be updated at each step
+         !! flag to select if matrix \( a(x_i,x_j') \) should be updated at each step
       character(*), intent(in), optional :: name
-         !! object name
+         !! name
 
       self%afnc => afnc
       call self%set_moment(moment)
       if (present(update_a)) self%update_a = update_a
       call self%set_name(name)
-
       if (present(grid)) call self%init2(grid)
 
    end function aggterm_init
@@ -77,17 +76,21 @@ contains
    !! Initialize(2) 'aggterm' object.
       class(aggterm), intent(inout) :: self
          !! object
-      type(grid1), intent(in), optional :: grid
+      type(grid1), intent(in) :: grid
          !! grid1 object
 
       call self%set_grid(grid)
-      call self%aggterm_allocations()
+      call self%particleterm_allocations()
+      associate (nc => self%grid%ncells)
+         allocate (self%array_comb(nc))
+         self%a = spmatrix(nc)
+      end associate
       call self%compute_combinations()
       self%inited = .true.
 
    end subroutine aggterm_init2
 
-   pure subroutine aggterm_eval(self, np, y, result, birth, death)
+   pure subroutine aggterm_eval(self, np, y, udot, udot_birth, udot_death)
    !! Evaluate rate of aggregation at a given instant.
       class(aggterm), intent(inout) :: self
          !! object
@@ -95,43 +98,43 @@ contains
          !! vector(ncells) with number of particles in cell \( i \)
       real(rk), intent(in) :: y(:)
          !! environment vector
-      real(rk), intent(out), optional :: result(:)
-         !! vector(ncells) with net rate of change (birth-death)
-      real(rk), intent(out), optional :: birth(:)
-         !! vector(ncells) with birth term
-      real(rk), intent(out), optional :: death(:)
-         !! vector(ncells) with death term
+      real(rk), intent(out), optional :: udot(:)
+         !! net rate of change (birth-death), du/dt
+      real(rk), intent(out), optional :: udot_birth(:)
+         !! rate of birth (source term, +)
+      real(rk), intent(out), optional :: udot_death(:)
+         !! rate of death (sink term, -)
 
       real(rk) :: weight
       integer:: i, j, k, n
 
       associate (nc => self%grid%ncells, &
                  array_comb => self%array_comb, a => self%a, &
-                 birth_ => self%birth, death_ => self%death, result_ => self%result)
+                 birth => self%udot_birth, death => self%udot_death, net => self%udot)
 
          ! Evaluate aggregation frequency for all particle combinations
          if (self%update_a .or. self%empty_a) call self%compute_a(y)
 
          ! Birth term
-         birth_ = ZERO
+         birth = ZERO
          do concurrent(i=1:nc)
             do n = 1, array_comb(i)%size()
                j = array_comb(i)%ia(n)
                k = array_comb(i)%ib(n)
                weight = array_comb(i)%weight(n)
-               birth_(i) = birth_(i) + &
-                           (ONE - HALF*delta_kronecker(j, k))*weight*a%get(j, k)*np(j)*np(k)
+               birth(i) = birth(i) + &
+                          (ONE - HALF*delta_kronecker(j, k))*weight*a%get(j, k)*np(j)*np(k)
             end do
          end do
-         if (present(birth)) birth = birth_
+         if (present(udot_birth)) udot_birth = birth
 
          ! Death term
-         death_ = np*a%multvec(np)
-         if (present(death)) death = death_
+         death = np*a%multvec(np)
+         if (present(udot_death)) udot_death = death
 
          ! Net rate
-         result_ = birth_ - death_
-         if (present(result)) result = result_
+         net = birth - death
+         if (present(udot)) udot = net
 
       end associate
 
@@ -232,25 +235,5 @@ contains
       end associate
 
    end subroutine compute_combinations
-
-   pure subroutine aggterm_allocations(self)
-   !! Allocate arrays.
-      class(aggterm), intent(inout) :: self
-         !! object
-
-      ! Call parent method
-      call self%particleterm_allocations()
-
-      ! Do own allocations
-      if (associated(self%grid)) then
-         associate (nc => self%grid%ncells)
-            allocate (self%array_comb(nc))
-            self%a = spmatrix(nc)
-         end associate
-      else
-         call self%error_msg("Allocation failed due to missing grid.")
-      end if
-
-   end subroutine aggterm_allocations
 
 end module pbepack_agg1

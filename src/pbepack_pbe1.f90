@@ -3,6 +3,7 @@ module pbepack_pbe1
    use pbepack_basetypes, only: base
    use pbepack_agg1, only: aggterm
    use pbepack_break1, only: breakterm
+   use pbepack_growth1, only: growthterm
    use hrweno_grids, only: grid1
    implicit none
    private
@@ -15,6 +16,8 @@ module pbepack_pbe1
         !! aggregation object
       type(breakterm), pointer :: break => null()
          !! breakage object
+      type(growthterm), pointer :: growth => null()
+         !! growth object
       procedure(ic1_t), nopass, pointer :: ic => null()
         !! initial condition
    contains
@@ -37,7 +40,7 @@ module pbepack_pbe1
 
 contains
 
-   type(pbe1) function pbe1_init(grid, agg, break, ic, name) result(self)
+   type(pbe1) function pbe1_init(grid, agg, break, growth, ic, name) result(self)
    !! Initialize 'pbe1' object.
       type(grid1), intent(in), target :: grid
          !! grid object
@@ -45,14 +48,17 @@ contains
          !! aggterm object
       type(breakterm), intent(in), target, optional :: break
          !! breakterm object
+      type(growthterm), intent(in), target, optional :: growth
+         !! growthterm object
       procedure(ic1_t), optional :: ic
-        !! initial condition, \( f_0(x) \)
+         !! initial condition, \( f_0(x) \)
       character(*), intent(in), optional :: name
-        !! pbe name
+         !! name
 
       call self%set_grid(grid)
       if (present(agg)) self%agg => agg
       if (present(break)) self%break => break
+      if (present(growth)) self%growth => growth
       if (present(ic)) self%ic => ic
       call self%set_name(name)
 
@@ -72,13 +78,18 @@ contains
       result = ZERO
       if (associated(self%agg)) then
          call self%agg%eval(np, y)
-         result = result + self%agg%result
+         result = result + self%agg%udot
       end if
 
       if (associated(self%break)) then
          call self%break%eval(np, y)
-         result = result + self%break%result
+         result = result + self%break%udot
       end if
+
+      ! if (associated(self%growth)) then
+      !    call self%growth%eval(np, y)
+      !    result = result + self%growth%result
+      ! end if
 
       ! ! Net rate
       ! if (present(result)) result = result_

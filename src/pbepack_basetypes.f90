@@ -29,8 +29,8 @@ module pbepack_basetypes
 
    type, extends(base), abstract :: pbeterm
    !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
-      real(rk), allocatable :: result(:)
-         !! vectors(ncells) holding the result
+      real(rk), allocatable :: udot(:)
+         !! net rate of change, du/dt
       logical :: inited = .false.
          !! initialization flag
    contains
@@ -41,10 +41,10 @@ module pbepack_basetypes
    !! Abstract 1D PBE particle term class (aggregation, breakage).
       integer :: moment
          !! moment of \(x\) to be conserved upon aggregation/breakage
-      real(rk), allocatable :: birth(:)
-         !! vectors(ncells) holding the birth (source, +) term
-      real(rk), allocatable :: death(:)
-         !! vectors(ncells) holding the death (sink, -) term
+      real(rk), allocatable :: udot_birth(:)
+         !! rate of birth (source term, +)
+      real(rk), allocatable :: udot_death(:)
+         !! rate of death (sink term, -)
    contains
       procedure, pass(self) :: set_moment
       procedure, pass(self) :: particleterm_allocations
@@ -112,7 +112,7 @@ contains
          !! object
 
       if (associated(self%grid)) then
-         allocate (self%result(self%grid%ncells))
+         allocate (self%udot(self%grid%ncells))
       else
          call self%error_msg("Allocation failed due to missing grid.")
       end if
@@ -129,7 +129,7 @@ contains
 
       ! Do own allocations
       if (associated(self%grid)) then
-         allocate (self%birth(self%grid%ncells), self%death(self%grid%ncells))
+         allocate (self%udot_birth(self%grid%ncells), self%udot_death(self%grid%ncells))
       else
          call self%error_msg("Allocation failed due to missing grid.")
       end if

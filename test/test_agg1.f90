@@ -55,7 +55,7 @@ contains
             np = ZERO
             np(1:nc/2 - 1) = ONE
             y = ZERO
-            call agg%eval(np, y, birth=birth, death=death)
+            call agg%eval(np, y, udot_birth=birth, udot_death=death)
 
             moment_birth_0 = sum(birth)
             moment_death_0 = sum(death)

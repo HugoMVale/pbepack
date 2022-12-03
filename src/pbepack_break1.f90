@@ -11,6 +11,7 @@ module pbepack_break1
 
    type, extends(particleterm) :: breakterm
    !! Breakage term class.
+      private
       procedure(bfnc1_t), nopass, pointer :: bfnc => null()
          !! breakage frequency function
       procedure(dfnc1_t), nopass, pointer :: dfnc => null()
@@ -28,11 +29,10 @@ module pbepack_break1
       logical :: empty_d = .true.
          !! flag indicating state of vector **d**.
    contains
-      procedure, pass(self) :: eval => breakterm_eval
-      procedure, pass(self) :: init2 => breakterm_init2
-      procedure, pass(self), private :: breakterm_allocations
-      procedure, pass(self), private :: compute_b
-      procedure, pass(self), private :: compute_d
+      procedure, pass(self), public :: eval => breakterm_eval
+      procedure, pass(self), public :: init2 => breakterm_init2
+      procedure, pass(self) :: compute_b
+      procedure, pass(self) :: compute_d
    end type breakterm
 
    abstract interface
@@ -75,11 +75,11 @@ contains
       type(grid1), intent(in), target, optional :: grid
          !! 'grid1' object
       logical, intent(in), optional :: update_b
-         !! flag to select if vector **b** should be updated at each step
+         !! flag to select if vector \( b(x_i) \) should be updated at each step
       logical, intent(in), optional :: update_d
-         !! flag to select if vector **d** should be updated at each step
+         !! flag to select if array \( d(x_i,x_j') \) should be updated at each step
       character(*), intent(in), optional :: name
-         !! object name
+         !! name
 
       self%bfnc => bfnc
       self%dfnc => dfnc
@@ -96,35 +96,19 @@ contains
    !! Initialize(2) 'breakterm' object.
       class(breakterm), intent(inout) :: self
          !! object
-      type(grid1), intent(in), optional :: grid
+      type(grid1), intent(in) :: grid
          !! grid1 object
 
       call self%set_grid(grid)
-      call self%breakterm_allocations()
+      call self%particleterm_allocations()
+      associate (nc => self%grid%ncells)
+         allocate (self%b(nc), self%d((nc - 2)*(nc - 1)/2 + 3*(nc - 1)))
+      end associate
       self%inited = .true.
 
    end subroutine breakterm_init2
 
-   pure subroutine breakterm_allocations(self)
-   !! Allocator arrays 'breakterm' class.
-      class(breakterm), intent(inout) :: self
-         !! object
-
-      ! Call parent method
-      call self%particleterm_allocations()
-
-      ! Do own allocations
-      if (associated(self%grid)) then
-         associate (nc => self%grid%ncells)
-            allocate (self%b(nc), self%d((nc - 2)*(nc - 1)/2 + 3*(nc - 1)))
-         end associate
-      else
-         call self%error_msg("Allocation failed due to missing grid.")
-      end if
-
-   end subroutine breakterm_allocations
-
-   pure subroutine breakterm_eval(self, np, y, result, birth, death)
+   pure subroutine breakterm_eval(self, np, y, udot, udot_birth, udot_death)
    !! Evaluate the rate of breakage at a given instant, using the technique described in
    !! Section 3.3 of Kumar and Ramkrishna (1996). The birth/source term is computed according
    !! to a slightly different procedure: the summation is done from the perspective of the
@@ -136,41 +120,41 @@ contains
          !! vector(ncells) with number of particles in cell \( i \)
       real(rk), intent(in) :: y(:)
          !! environment vector
-      real(rk), intent(out), optional :: result(:)
-         !! vector(ncells) with net rate of change (birth-death)
-      real(rk), intent(out), optional :: birth(:)
-         !! vector(ncells) with birth term
-      real(rk), intent(out), optional :: death(:)
-         !! vector(ncells) with death term
+      real(rk), intent(out), optional :: udot(:)
+         !! et rate of change (birth-death), du/dt
+      real(rk), intent(out), optional :: udot_birth(:)
+         !! rate of birth (source term, +)
+      real(rk), intent(out), optional :: udot_death(:)
+         !! rate of death (sink term, -)
 
       real(rk) :: weight(2)
       integer :: i, k
 
       associate (nc => self%grid%ncells, b => self%b, &
-                 birth_ => self%birth, death_ => self%death, result_ => self%result)
+                 birth => self%udot_birth, death => self%udot_death, net => self%udot)
 
          ! Evaluate breakage frequency and daughter distribution kernels
          if (self%update_b .or. self%empty_b) call self%compute_b(y)
          !if (self%update_d .or. self%empty_d) call self%compute_d(y)
 
          ! Death/sink term
-         death_ = b*np
-         if (present(death)) death = death_
+         death = b*np
+         if (present(udot_death)) udot_death = death
 
          ! Birth/source term
-         birth_ = ZERO
+         birth = ZERO
          do k = 2, nc
             do i = 1, k - 1
                weight = daughter_split(i, k)
-               birth_(i) = birth_(i) + weight(1)*death_(k)
-               birth_(i + 1) = birth_(i + 1) + weight(2)*death_(k)
+               birth(i) = birth(i) + weight(1)*death(k)
+               birth(i + 1) = birth(i + 1) + weight(2)*death(k)
             end do
          end do
-         if (present(birth)) birth = birth_
+         if (present(udot_birth)) udot_birth = birth
 
          ! Net rate
-         result_ = birth_ - death_
-         if (present(result)) result = result_
+         net = birth - death
+         if (present(udot)) udot = net
 
       end associate
 

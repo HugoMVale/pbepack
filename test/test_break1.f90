@@ -58,7 +58,7 @@ contains
             np = ZERO
             np(nc) = ONE
             y = ZERO
-            call break%eval(np, y, birth=birth, death=death)
+            call break%eval(np, y, udot_birth=birth, udot_death=death)
 
             moment_birth_0 = sum(birth)
             moment_death_0 = sum(death)
