@@ -16,7 +16,7 @@ module pbepack_basetypes
       character(:), allocatable :: msg
          !! error message
       integer :: ierr = 0
-         !! error status
+         !! error code
       logical :: verbose = .false.
          !! verbose flag
       type(grid1), pointer :: grid => null()
@@ -30,7 +30,7 @@ module pbepack_basetypes
    type, extends(base), abstract :: pbeterm
    !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
       real(rk), allocatable :: udot(:)
-         !! net rate of change, du/dt
+         !! net rate of change, \( du/dt \)
       logical :: inited = .false.
          !! initialization flag
    contains

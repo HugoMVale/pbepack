@@ -60,7 +60,7 @@ contains
       type(grid1), intent(in), optional :: grid
          !! 'grid1' object
       logical, intent(in), optional :: update_a
-         !! flag to select if matrix \( a(x_i,x_j') \) should be updated at each step
+         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step
       character(*), intent(in), optional :: name
          !! name
 
@@ -164,7 +164,7 @@ contains
 
    impure subroutine compute_combinations(self)
    !! Precompute particle combinations leading to birth and respective weights.
-   !! @note: This procedure is impure because some 'ftlList' methods are impure. Otherwise,
+   !! @note This procedure is impure because some 'ftlList' methods are impure. Otherwise,
    !! this procedure could be "pure".
       class(aggterm), intent(inout) :: self
          !! object

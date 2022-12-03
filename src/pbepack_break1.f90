@@ -75,9 +75,9 @@ contains
       type(grid1), intent(in), target, optional :: grid
          !! 'grid1' object
       logical, intent(in), optional :: update_b
-         !! flag to select if vector \( b(x_i) \) should be updated at each step
+         !! flag to select if \( b(x,y) \) is to be reevaluated at each step
       logical, intent(in), optional :: update_d
-         !! flag to select if array \( d(x_i,x_j') \) should be updated at each step
+         !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step
       character(*), intent(in), optional :: name
          !! name
 
@@ -121,7 +121,7 @@ contains
       real(rk), intent(in) :: y(:)
          !! environment vector
       real(rk), intent(out), optional :: udot(:)
-         !! et rate of change (birth-death), du/dt
+         !! net rate of change (birth-death), \( du/dt \)
       real(rk), intent(out), optional :: udot_birth(:)
          !! rate of birth (source term, +)
       real(rk), intent(out), optional :: udot_death(:)
@@ -223,7 +223,7 @@ contains
    !! The distribution \( d(x,x',y) \) is only defined for \( x \leq x' \), leading to a
    !! triangular array of values. To avoid using such a 'special' array, the data is flattened
    !! and packed into a vector.
-   !! @note: not active. Need better concept, covering 'd' and weights.
+   !! @note Not active. Need better concept, covering 'd' and weights.
       class(breakterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: y(:)
