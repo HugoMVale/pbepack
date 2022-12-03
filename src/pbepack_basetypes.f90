@@ -30,7 +30,7 @@ module pbepack_basetypes
    type, extends(base), abstract :: pbeterm
    !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
       real(rk), allocatable :: result(:)
-         !! vectors(ncells) holding the result (net rate)
+         !! vectors(ncells) holding the result
       logical :: inited = .false.
          !! initialization flag
    contains
@@ -40,7 +40,7 @@ module pbepack_basetypes
    type, extends(pbeterm), abstract :: particleterm
    !! Abstract 1D PBE particle term class (aggregation, breakage).
       integer :: moment
-         !! moment of 'x' to be conserved upon aggregation/breakage
+         !! moment of \(x\) to be conserved upon aggregation/breakage
       real(rk), allocatable :: birth(:)
          !! vectors(ncells) holding the birth (source, +) term
       real(rk), allocatable :: death(:)
@@ -57,7 +57,7 @@ contains
       class(base), intent(inout) :: self
          !! object
       type(grid1), intent(in), target :: grid
-         !! grid1 object
+         !! 'grid1' object
 
       if (grid%ncells > 1) then
          self%grid => grid
@@ -96,7 +96,7 @@ contains
       class(particleterm), intent(inout) :: self
          !! object
       integer, intent(in) :: moment
-         !! moment of 'x' to be conserved upon aggregation
+         !! moment of \( x \) to be conserved upon aggregation
 
       if (moment > 0) then
          self%moment = moment

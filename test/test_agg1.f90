@@ -22,8 +22,7 @@ contains
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
-                  new_unittest("moment conservation", test_moment_conservation), &
-                  new_unittest("analytical solution, case 1", test_case1) &
+                  new_unittest("moment conservation", test_moment_conservation) &
                   ]
 
    end subroutine
@@ -63,10 +62,8 @@ contains
             moment_birth_m = sum(birth*gx%center**moment)
             moment_death_m = sum(death*gx%center**moment)
 
-            call check(error, moment_birth_0, moment_death_0/2, rel=.true., &
-                       thr=1e-14_rk)
-            call check(error, moment_birth_m, moment_death_m, rel=.true., &
-                       thr=1e-14_rk)
+            call check(error, moment_birth_0, moment_death_0/2, rel=.true., thr=1e-14_rk)
+            call check(error, moment_birth_m, moment_death_m, rel=.true., thr=1e-14_rk)
 
             if (allocated(error) .or. verbose) then
                print *
@@ -76,6 +73,7 @@ contains
                write (stderr, '(a18,(es24.14e3))') "birth/death("//to_string(moment)//")   =", moment_birth_m/moment_death_m
             end if
             if (allocated(error)) return
+
          end do
       end do
 

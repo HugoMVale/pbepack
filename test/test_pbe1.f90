@@ -4,6 +4,7 @@ module test_pbe1
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds, only: rk
    use pbepack_agg1, only: aggterm
+   use pbepack_break1, only: breakterm
    use pbepack_pbe1, only: pbe1
    use hrweno_grids, only: grid1
    use utils_tests
@@ -23,39 +24,55 @@ contains
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
-                  new_unittest("PBE with aggterm", test_agg) &
+                  new_unittest("PBE terms", test_pbeterms) &
                   !new_unittest("analytical solution, case 1", test_case1) &
                   !new_unittest("wenok with non-uniform grid", test_wenok_nonuniform) &
                   ]
 
    end subroutine
 
-   subroutine test_agg(error)
+   subroutine test_pbeterms(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 100
+      integer, parameter :: nc = 42
       type(grid1) :: gx
       type(aggterm) :: agg
+      type(breakterm) :: break
       type(pbe1) :: eq
-      real(rk), dimension(nc) :: np, result
-      real(rk) :: y(0:0), moment_birth_0, moment_birth_m, moment_death_0, moment_death_m
-      integer :: moment, scl
+      real(rk) :: np(nc), result(nc, 0:3)
+      real(rk) :: y(0:0)
+      integer :: moment, i
 
       ! Init linear grid
       call gx%linear(1._rk, 1e3_rk, nc)
 
       ! Init aggregation term
-      agg = aggterm(afnc=aconst, moment=1, grid=gx, name="agg")
+      moment = 1
+      agg = aggterm(afnc=aconst, moment=moment, grid=gx, name="agg")
+
+      ! Init breakage term
+      break = breakterm(bfnc=bconst, dfnc=dfuni, moment=moment, grid=gx, name="break")
 
       ! Init pbe object
-      eq = pbe1(grid=gx, agg=agg, name="a pbe with aggregation only")
+      eq = pbe1(grid=gx, agg=agg, break=break, name="a pbe with some terms")
 
       ! Evaluate pbe at a given point
-      np = 0
-      np(1:nc/2 - 1) = 1
-      y = 0._rk
-      call eq%eval(np, y, result)
+      np = ZERO
+      np(1:nc/2 - 1) = ONE
+      y = ZERO
+      result = ZERO
+      call eq%eval(np, y, result(:, 0))
+      call agg%eval(np, y, result(:, 1))
+      call break%eval(np, y, result(:, 2))
+      call check(error, result(:, 0), sum(result(:, 1:), dim=2))
 
-   end subroutine test_agg
+   contains
+
+      pure real(rk) function dfuni(xd, xo, y) result(res)
+         real(rk), intent(in) :: xd, xo, y(:)
+         res = duniform(xd, xo, y, moment)
+      end function
+
+   end subroutine test_pbeterms
 
 end module test_pbe1

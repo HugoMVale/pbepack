@@ -7,13 +7,13 @@ module pbepack_algebra
    public:: spmatrix
 
    type :: spmatrix
-   !! Symmetric array class
+   !! Symmetric array class.
       real(rk), allocatable :: ap(:)
          !! vector with array values in packed storage format
       integer :: n
          !! number of rows or columns
       character(1) :: uplo = "u"
-         !! flag to specify whether the upper(u) or lower(l) triangle is supplied
+         !! flag to specify whether the (u)pper or (l)ower triangle is supplied
    contains
       procedure, pass(self) :: multvec => spmatrix_multvec
       procedure, pass(self) :: get => spmatrix_get
@@ -27,7 +27,7 @@ module pbepack_algebra
 contains
 
    pure type(spmatrix) function spmatrix_init(n) result(res)
-      !! Initialize 'spmatrix' object.
+   !! Initialize 'spmatrix' object.
       integer, intent(in) :: n
          !! number of rows or columns
 
@@ -66,16 +66,16 @@ contains
    end subroutine spmatrix_set
 
    pure function spmatrix_multvec(self, x) result(y)
-      !! Performs the matrix-vector operation:
-      !! ```
-      !! y:= A*x
-      !! ```
-      !! where x is an n element vector and A is a n*n symmetric matrix.
-      !! Source: https://netlib.org/lapack/lug/node123.html
+   !! Performs the matrix-vector operation:
+   !! ```
+   !! y:= A*x
+   !! ```
+   !! where x is an n element vector and A is a n*n symmetric matrix.
+   !! Source: [Lapack](https://netlib.org/lapack/lug/node123.html)
       class(spmatrix), intent(in) :: self
-            !! symmetric array(n,n)
+         !! symmetric array(n,n)
       real(rk), intent(in) :: x(:)
-            !! vector(n)
+         !! vector(n)
       real(rk) :: y(size(x))
 
       integer :: i, j, k, kk

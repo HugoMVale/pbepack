@@ -9,7 +9,7 @@ contains
    pure real(rk) function delta_kronecker(i, j) result(res)
    !! Delta kronecker \( \delta_{i,j} \).
       integer, intent(in) :: i, j
-         !! integers
+         !! integer
 
       res = ZERO
       if (i == j) res = ONE

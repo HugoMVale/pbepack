@@ -20,15 +20,16 @@ module pbepack_break1
       real(rk), allocatable :: d(:)
          !! vector of daughter probabilities
       logical :: update_b = .true.
-         !! flag to select if matrix 'b' should be updated at each step.
+         !! flag to select if vector **b** should be updated at each step.
       logical :: empty_b = .true.
-         !! flag indicating state of matrix 'b'.
+         !! flag indicating state of vector **b**.
       logical :: update_d = .true.
-         !! flag to select if matrix 'd' should be updated at each step.
+         !! flag to select if vector **d** should be updated at each step.
       logical :: empty_d = .true.
-         !! flag indicating state of matrix 'd'.
+         !! flag indicating state of vector **d**.
    contains
       procedure, pass(self) :: eval => breakterm_eval
+      procedure, pass(self) :: init2 => breakterm_init2
       procedure, pass(self), private :: breakterm_allocations
       procedure, pass(self), private :: compute_b
       procedure, pass(self), private :: compute_d
@@ -70,13 +71,13 @@ contains
       procedure(dfnc1_t) :: dfnc
          !! daughter distribution function, \( d(x,x',y) \)
       integer, intent(in) :: moment
-         !! moment of 'x' to be conserved upon breakage (>0)
+         !! moment of \( x \) to be conserved upon breakage (>0)
       type(grid1), intent(in), target, optional :: grid
-         !! grid1 object
+         !! 'grid1' object
       logical, intent(in), optional :: update_b
-         !! flag to select if matrix 'b' should be updated at each step
+         !! flag to select if vector **b** should be updated at each step
       logical, intent(in), optional :: update_d
-         !! flag to select if matrix 'd' should be updated at each step
+         !! flag to select if vector **d** should be updated at each step
       character(*), intent(in), optional :: name
          !! object name
 
@@ -87,16 +88,22 @@ contains
       if (present(update_b)) self%update_b = update_b
       if (present(update_d)) self%update_d = update_d
 
-      if (present(grid)) then
-         call self%set_grid(grid)
-         call self%breakterm_allocations()
-         self%inited = .true.
-         self%msg = "Initialization completed successfully"
-      else
-         self%msg = "Missing 'grid'."
-      end if
+      if (present(grid)) call self%init2(grid)
 
    end function breakterm_init
+
+   subroutine breakterm_init2(self, grid)
+   !! Initialize(2) 'breakterm' object.
+      class(breakterm), intent(inout) :: self
+         !! object
+      type(grid1), intent(in), optional :: grid
+         !! grid1 object
+
+      call self%set_grid(grid)
+      call self%breakterm_allocations()
+      self%inited = .true.
+
+   end subroutine breakterm_init2
 
    pure subroutine breakterm_allocations(self)
    !! Allocator arrays 'breakterm' class.
@@ -126,7 +133,7 @@ contains
       class(breakterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: np(:)
-         !! vector(ncells) with number of particles in cell 'i'
+         !! vector(ncells) with number of particles in cell \( i \)
       real(rk), intent(in) :: y(:)
          !! environment vector
       real(rk), intent(out), optional :: result(:)

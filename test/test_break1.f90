@@ -23,6 +23,7 @@ contains
 
       testsuite = [ &
                   new_unittest("moment conservation", test_moment_conservation) &
+                  ! new_unittest("call from pbe", test_pbe_break)
                   !new_unittest("analytical solution, case 1", test_case1) &
                   ]
 
@@ -64,23 +65,20 @@ contains
             moment_birth_m = sum(birth*gx%center**moment)
             moment_death_m = sum(death*gx%center**moment)
 
-            call check(error, moment_birth_0, moment_death_0*2, &
-                       rel=.true., thr=1e-2_rk)
-            call check(error, moment_birth_m, moment_death_m, &
-                       rel=.true., thr=1e-8_rk)
+            call check(error, moment_birth_0, moment_death_0*2, rel=.true., thr=1e-2_rk)
+            call check(error, moment_birth_m, moment_death_m, rel=.true., thr=1e-8_rk)
 
             if (allocated(error) .or. verbose) then
                print *
                write (stderr, '(a18,a24)') "scale type       =", gx%scl
                write (stderr, '(a18,i24)') "preserved moment =", moment
-               write (stderr, '(a18,(es24.14e3))') "source/sink(0)   =", &
-                  moment_birth_0/moment_death_0
-               write (stderr, '(a18,(es24.14e3))') "source/sink("//to_string(moment)//")   =", &
-                  moment_birth_m/moment_death_m
+               write (stderr, '(a18,(es24.14e3))') "source/sink(0)   =", moment_birth_0/moment_death_0
+               write (stderr, '(a18,(es24.14e3))') "source/sink("//to_string(moment)//")   =", moment_birth_m/moment_death_m
             end if
-            if (allocated(error)) return
-         end do
 
+            if (allocated(error)) return
+
+         end do
       end do
 
       call cpu_time(tend)

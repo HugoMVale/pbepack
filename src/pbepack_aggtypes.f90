@@ -41,9 +41,9 @@ module pbepack_aggtypes
 contains
 
    impure subroutine list_new(self)
-   !! Constructor comblist.
+   !! Constructor 'comblist'.
       class(comblist), intent(inout) :: self
-         !! Object
+         !! object
       call self%ia%New
       call self%ib%New
       call self%weight%New
@@ -52,18 +52,16 @@ contains
    pure integer function list_size(self) result(res)
    !! Size(comblist).
       class(comblist), intent(in) :: self
-         !! Object
+         !! object
       res = self%ia%Size()
    end function list_size
 
    impure subroutine list_append(self, ia, ib, weight)
-   !! Append values to comblist.
+   !! Append values to 'comblist'.
       class(comblist), intent(inout) :: self
          !! object
-      integer :: ia
-         !! index particle a
-      integer :: ib
-         !! index particle b
+      integer :: ia, ib
+         !! particle index
       real(rk) :: weight
          !! weight
       call self%ia%PushBack(ia)
@@ -72,7 +70,7 @@ contains
    end subroutine list_append
 
    impure subroutine list_clear(self)
-   !! Clear comblist.
+   !! Clear 'comblist'.
       class(comblist), intent(inout) :: self
          !! object
       call self%ia%Clear
@@ -81,7 +79,7 @@ contains
    end subroutine list_clear
 
    impure subroutine list_toarray(self, array)
-   !! Copy contents of comblist to array of same type.
+   !! Copy contents of 'comblist' to array of same type.
       class(comblist), intent(inout) :: self
          !! object
       type(combarray), intent(inout) :: array
@@ -92,11 +90,11 @@ contains
    end subroutine list_toarray
 
    pure subroutine array_alloc(self, n)
-   !! Allocate combarray.
+   !! Allocate 'combarray'.
       class(combarray), intent(inout) :: self
-         !! Object
+         !! object
       integer, intent(in) :: n
-         !! Array size
+         !! array size
       allocate (self%ia(n))
       allocate (self%ib(n))
       allocate (self%weight(n))
@@ -105,7 +103,7 @@ contains
    pure integer function array_size(self) result(res)
    !! Size(combarray).
       class(combarray), intent(in) :: self
-         !! Object
+         !! object
       res = size(self%ia)
    end function array_size
 

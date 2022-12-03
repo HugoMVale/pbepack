@@ -21,11 +21,12 @@ module pbepack_agg1
       type(combarray), allocatable, private :: array_comb(:)
          !! array of particle combinations and weights for birth term
       logical :: update_a = .true.
-         !! flag to select if matrix 'a' should be updated at each step.
+         !! flag to select if matrix **a** should be updated at each step.
       logical :: empty_a = .true.
-         !! flag indicating state of matrix 'a'.
+         !! flag indicating state of matrix **a**.
    contains
       procedure, pass(self) :: eval => aggterm_eval
+      procedure, pass(self) :: init2 => aggterm_init2
       procedure, pass(self), private :: aggterm_allocations
       procedure, pass(self), private :: compute_combinations
       procedure, pass(self), private :: compute_a
@@ -55,11 +56,11 @@ contains
       procedure(afnc1_t) :: afnc
          !! aggregation frequency function, \( a(x,x',y) \)
       integer, intent(in) :: moment
-         !! moment of \( x \) to be conserved upon aggregation (>0)
+         !! moment of \( x \) to be conserved upon aggregation (> 0)
       type(grid1), intent(in), optional :: grid
-         !! grid1 object
+         !! 'grid1' object
       logical, intent(in), optional :: update_a
-         !! flag to select if matrix 'a' should be updated at each step
+         !! flag to select if matrix **a** should be updated at each step
       character(*), intent(in), optional :: name
          !! object name
 
@@ -68,24 +69,30 @@ contains
       if (present(update_a)) self%update_a = update_a
       call self%set_name(name)
 
-      if (present(grid)) then
-         call self%set_grid(grid)
-         call self%aggterm_allocations()
-         call self%compute_combinations()
-         self%inited = .true.
-         self%msg = "Initialization completed successfully"
-      else
-         self%msg = "Missing 'grid'."
-      end if
+      if (present(grid)) call self%init2(grid)
 
    end function aggterm_init
+
+   subroutine aggterm_init2(self, grid)
+   !! Initialize(2) 'aggterm' object.
+      class(aggterm), intent(inout) :: self
+         !! object
+      type(grid1), intent(in), optional :: grid
+         !! grid1 object
+
+      call self%set_grid(grid)
+      call self%aggterm_allocations()
+      call self%compute_combinations()
+      self%inited = .true.
+
+   end subroutine aggterm_init2
 
    pure subroutine aggterm_eval(self, np, y, result, birth, death)
    !! Evaluate rate of aggregation at a given instant.
       class(aggterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: np(:)
-         !! vector(ncells) with number of particles in cell 'i'
+         !! vector(ncells) with number of particles in cell \( i \)
       real(rk), intent(in) :: y(:)
          !! environment vector
       real(rk), intent(out), optional :: result(:)
