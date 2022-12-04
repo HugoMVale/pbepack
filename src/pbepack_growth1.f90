@@ -6,6 +6,7 @@ module pbepack_growth1
    use hrweno_grids, only: grid1
    use hrweno_weno, only: weno
    use hrweno_fluxes, only: godunov
+   use stdlib_optval, only: optval
    implicit none
    private
 
@@ -26,7 +27,6 @@ module pbepack_growth1
          !! flux at grid edges
    contains
       procedure, pass(self), public :: eval => growthterm_eval
-      procedure, pass(self), public :: init2 => growthterm_init2
    end type growthterm
 
    abstract interface
@@ -46,41 +46,34 @@ module pbepack_growth1
 
 contains
 
-   type(growthterm) function growthterm_init(gfnc, grid, name) result(self)
+   type(growthterm) function growthterm_init(gfnc, wenok, grid, name) result(self)
    !! Initialize 'growthterm' object.
       procedure(gfnc1_t) :: gfnc
          !! growth rate  function, \( g(x,y) \)
+      integer, intent(in), optional :: wenok
+         !! 2*(k-1) order of the WENO reconstruction (1 <= k <= 3, default=3)
       type(grid1), intent(in), optional :: grid
          !! 'grid1' object
       character(*), intent(in), optional :: name
          !! name
+      integer :: k
 
       self%gfnc => gfnc
       call self%set_name(name)
-      if (present(grid)) call self%init2(grid)
-
-   end function growthterm_init
-
-   subroutine growthterm_init2(self, grid)
-   !! Initialize(2) 'growthterm' object.
-      class(growthterm), intent(inout) :: self
-         !! object
-      type(grid1), intent(in) :: grid
-         !! 'grid1' object
-
       call self%set_grid(grid)
       call self%pbeterm_allocations()
       associate (nc => self%grid%ncells, gx => self%grid)
+         k = optval(wenok, 3)
          if (gx%scale == "linear") then
-            self%wenorec = weno(ncells=nc, k=3)
+            self%wenorec = weno(nc, k=k)
          else
-            self%wenorec = weno(ncells=nc, k=3, xedges=gx%edges)
+            self%wenorec = weno(nc, k=k, xedges=gx%edges)
          end if
          allocate (self%uleft(nc), self%uright(nc), self%flux_edges(0:nc))
       end associate
       self%inited = .true.
 
-   end subroutine growthterm_init2
+   end function growthterm_init
 
    pure subroutine growthterm_eval(self, u, y, udot)
    !! Evaluate rate of aggregation at a given instant.

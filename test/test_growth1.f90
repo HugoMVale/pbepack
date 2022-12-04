@@ -36,7 +36,7 @@ contains
       type(growthterm) :: growth
       real(rk), dimension(nc) :: u, udot
       real(rk) :: y(0:0), delta_moment(0:1)
-      integer :: scale, i
+      integer :: i
 
       call gx%linear(1._rk, 6._rk, nc)
 
