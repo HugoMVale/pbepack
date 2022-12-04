@@ -99,7 +99,7 @@ contains
       real(rk), intent(in) :: y(:)
          !! environment vector
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change (birth-death), du/dt
+         !! net rate of change (birth-death), \( du/dt \)
       real(rk), intent(out), optional :: udot_birth(:)
          !! rate of birth (source term, +)
       real(rk), intent(out), optional :: udot_death(:)

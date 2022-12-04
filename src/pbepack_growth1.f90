@@ -5,6 +5,7 @@ module pbepack_growth1
    use pbepack_basetypes, only: pbeterm
    use hrweno_grids, only: grid1
    use hrweno_weno, only: weno
+   use hrweno_fluxes, only: godunov
    implicit none
    private
 
@@ -70,7 +71,7 @@ contains
       call self%set_grid(grid)
       call self%pbeterm_allocations()
       associate (nc => self%grid%ncells, gx => self%grid)
-         if (gx%scl == "linear") then
+         if (gx%scale == "linear") then
             self%wenorec = weno(ncells=nc, k=3)
          else
             self%wenorec = weno(ncells=nc, k=3, xedges=gx%edges)
@@ -86,39 +87,38 @@ contains
       class(growthterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! vector(ncells) with cell-average number density
+         !! cell-average number density
       real(rk), intent(in) :: y(:)
          !! environment vector
       real(rk), intent(out), optional :: udot(:)
-         !! vector(ncells) with net rate of change
+         !! net rate of change, \( du/dt \)
 
       integer :: i
 
-      associate (nc => self%grid%ncells, uleft => self%uleft, uright => self%uright)
+      associate (nc => self%grid%ncells, gx => self%grid, uleft => self%uleft, &
+                 uright => self%uright, flux_edges => self%flux_edges)
          ! Get reconstructed values at cell boundaries
          call self%wenorec%reconstruct(u, uleft, uright)
 
-         ! ! Fluxes at interior cell boundaries
-         ! ! One can use the Lax-Friedrichs or the Godunov method
-         ! do concurrent(i=1:nc - 1)
-         !    !fedges(i) = lax_friedrichs(flux, vr(i), vl(i+1), gx%r(i), t, alpha = 1._rk)
-         !    fedges(i) = godunov(flux, vr(i), vl(i + 1), [gx%right(i)], t)
-         ! end do
+         ! Fluxes at interior cell boundaries
+         do concurrent(i=1:nc - 1)
+            flux_edges(i) = godunov(gflux, uright(i), uleft(i + 1), [gx%right(i)], ZERO)
+         end do
 
-         ! ! Apply problem-specific flux constraints at domain boundaries
-         ! fedges(0) = 0
-         ! fedges(nc) = fedges(nc - 1)
+         ! Apply problem-specific flux constraints at domain boundaries
+         flux_edges(0) = 0
+         flux_edges(nc) = flux_edges(nc - 1)
 
-         ! ! Evaluate du/dt
-         ! udot = -(fedges(1:) - fedges(:nc - 1))/gx%width
+         ! Evaluate du/dt
+         udot = -(flux_edges(1:) - flux_edges(:nc - 1))/gx%width
       end associate
 
    contains
 
-      pure real(rk) function gflux(u, x, t) result(res)
-         real(rk), intent(in) :: u, x(:), t
+      pure real(rk) function gflux(u_, x_, t_) result(res)
+         real(rk), intent(in) :: u_, x_(:), t_
 
-         res = self%gfnc(x(1), y)*u
+         res = self%gfnc(x_(1), y)*u_
 
       end function
 

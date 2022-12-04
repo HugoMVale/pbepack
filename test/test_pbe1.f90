@@ -5,6 +5,7 @@ module test_pbe1
    use pbepack_kinds, only: rk
    use pbepack_agg1, only: aggterm
    use pbepack_break1, only: breakterm
+   use pbepack_growth1, only: growthterm
    use pbepack_pbe1, only: pbe1
    use hrweno_grids, only: grid1
    use utils_tests
@@ -38,10 +39,11 @@ contains
       type(grid1) :: gx
       type(aggterm) :: agg
       type(breakterm) :: break
+      type(growthterm) :: growth
       type(pbe1) :: eq
       real(rk) :: np(nc), result(nc, 0:3)
       real(rk) :: y(0:0)
-      integer :: moment, i
+      integer :: moment
 
       ! Init linear grid
       call gx%linear(1._rk, 1e3_rk, nc)
@@ -53,18 +55,22 @@ contains
       ! Init breakage term
       break = breakterm(bfnc=bconst, dfnc=dfuni, moment=moment, grid=gx, name="break")
 
+      ! Init growth term
+      growth = growthterm(gfnc=glinear, grid=gx, name="growth")
+
       ! Init pbe object
-      eq = pbe1(grid=gx, agg=agg, break=break, name="a pbe with some terms")
+      eq = pbe1(grid=gx, agg=agg, break=break, name="a pbe with several terms")
 
       ! Evaluate pbe at a given point
       np = ZERO
       np(1:nc/2 - 1) = ONE
       y = ZERO
       result = ZERO
-      call eq%eval(np, y, result(:, 0))
       call agg%eval(np, y, result(:, 1))
       call break%eval(np, y, result(:, 2))
-      call check(error, result(:, 0), sum(result(:, 1:), dim=2))
+      call growth%eval(np, y, result(:, 3))
+      call eq%eval(np, y, result(:, 0))
+      call check(error, result(:, 0), sum(result(:, 1:2), dim=2))
 
    contains
 

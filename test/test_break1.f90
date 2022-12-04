@@ -37,14 +37,11 @@ contains
       type(breakterm) :: break
       real(rk), dimension(nc) :: np, birth, death
       real(rk) :: y(0:0), moment_birth_0, moment_birth_m, moment_death_0, moment_death_m
-      real(rk) :: t0, tend
-      integer :: moment, scl
-
-      call cpu_time(t0)
+      integer :: moment, scale
 
       ! Test linear and log grids
-      do scl = 1, 2
-         select case (scl)
+      do scale = 1, 2
+         select case (scale)
          case (1)
             call gx%linear(0._rk, 3e2_rk, nc)
          case (2)
@@ -70,7 +67,7 @@ contains
 
             if (allocated(error) .or. verbose) then
                print *
-               write (stderr, '(a18,a24)') "scale type       =", gx%scl
+               write (stderr, '(a18,a24)') "scale type       =", gx%scale
                write (stderr, '(a18,i24)') "preserved moment =", moment
                write (stderr, '(a18,(es24.14e3))') "source/sink(0)   =", moment_birth_0/moment_death_0
                write (stderr, '(a18,(es24.14e3))') "source/sink("//to_string(moment)//")   =", moment_birth_m/moment_death_m
@@ -80,11 +77,6 @@ contains
 
          end do
       end do
-
-      call cpu_time(tend)
-      print *
-      print '("Time = ",f8.5," seconds.")', (tend - t0)
-      print *
 
    contains
 
