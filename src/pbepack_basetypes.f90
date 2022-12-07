@@ -39,7 +39,7 @@ module pbepack_basetypes
 
    type, extends(pbeterm), abstract :: particleterm
    !! Abstract 1D PBE particle term class (aggregation, breakage).
-      integer :: moment
+      integer :: moment = 1
          !! moment of \(x\) to be conserved upon aggregation/breakage
       real(rk), allocatable :: udot_birth(:)
          !! rate of birth (source term, +)

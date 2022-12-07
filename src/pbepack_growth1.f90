@@ -6,16 +6,15 @@ module pbepack_growth1
    use hrweno_grids, only: grid1
    use hrweno_weno, only: weno
    use hrweno_fluxes, only: godunov
-   use stdlib_optval, only: optval
    implicit none
    private
 
-   public :: growthterm
+   public :: growthterm, gfnc_t
 
    type, extends(pbeterm) :: growthterm
    !! Growth term class.
       private
-      procedure(gfnc1_t), nopass, pointer :: gfnc => null()
+      procedure(gfnc_t), nopass, pointer :: gfnc => null()
          !! growth rate function
       type(weno) :: wenorec
          !! WENO reconstruction
@@ -30,7 +29,7 @@ module pbepack_growth1
    end type growthterm
 
    abstract interface
-      pure real(rk) function gfnc1_t(x, y)
+      pure real(rk) function gfnc_t(x, y)
       !! Growth rate for 1D system
          import :: rk
          real(rk), intent(in) :: x
@@ -46,24 +45,22 @@ module pbepack_growth1
 
 contains
 
-   type(growthterm) function growthterm_init(gfnc, wenok, grid, name) result(self)
+   type(growthterm) function growthterm_init(grid, gfnc, k, name) result(self)
    !! Initialize 'growthterm' object.
-      procedure(gfnc1_t) :: gfnc
-         !! growth rate  function, \( g(x,y) \)
-      integer, intent(in), optional :: wenok
-         !! 2*(k-1) order of the WENO reconstruction (1 <= k <= 3, default=3)
-      type(grid1), intent(in), optional :: grid
+      type(grid1), intent(in) :: grid
          !! 'grid1' object
+      procedure(gfnc_t) :: gfnc
+         !! growth rate  function, \( g(x,y) \)
+      integer, intent(in) :: k
+         !! 2*(k-1) order of the WENO reconstruction (1 <= k <= 3)
       character(*), intent(in), optional :: name
          !! name
-      integer :: k
 
+      call self%set_grid(grid)
       self%gfnc => gfnc
       call self%set_name(name)
-      call self%set_grid(grid)
       call self%pbeterm_allocations()
       associate (nc => self%grid%ncells, gx => self%grid)
-         k = optval(wenok, 3)
          if (gx%scale == "linear") then
             self%wenorec = weno(nc, k=k)
          else
@@ -103,7 +100,9 @@ contains
          flux_edges(nc) = flux_edges(nc - 1)
 
          ! Evaluate du/dt
-         udot = -(flux_edges(1:) - flux_edges(:nc - 1))/gx%width
+         self%udot = -(flux_edges(1:) - flux_edges(:nc - 1))/gx%width
+         if (present(udot)) udot = self%udot
+
       end associate
 
    contains

@@ -1,10 +1,11 @@
 module pbepack_pbe1
    use pbepack_kinds
    use pbepack_basetypes, only: base
-   use pbepack_agg1, only: aggterm
-   use pbepack_break1, only: breakterm
-   use pbepack_growth1, only: growthterm
+   use pbepack_agg1, only: aggterm, afnc_t
+   use pbepack_break1, only: breakterm, bfnc_t, dfnc_t
+   use pbepack_growth1, only: growthterm, gfnc_t
    use hrweno_grids, only: grid1
+   use stdlib_optval, only: optval
    implicit none
    private
 
@@ -12,13 +13,13 @@ module pbepack_pbe1
 
    type, extends(base) :: pbe1
    !! 1D PBE class.
-      type(aggterm), pointer :: agg => null()
+      type(aggterm) :: agg
         !! aggregation object
-      type(breakterm), pointer :: break => null()
+      type(breakterm) :: break
          !! breakage object
-      type(growthterm), pointer :: growth => null()
+      type(growthterm) :: growth
          !! growth object
-      procedure(ic1_t), nopass, pointer :: ic => null()
+      procedure(ic_t), nopass, pointer :: ic => null()
         !! initial condition
    contains
       procedure, pass(self) :: eval => pbe_eval
@@ -26,7 +27,7 @@ module pbepack_pbe1
    end type pbe1
 
    abstract interface
-      pure real(rk) function ic1_t(x)
+      pure real(rk) function ic_t(x)
       !! Interface initial condition of PBE
          import rk
          real(rk), intent(in) :: x
@@ -40,26 +41,58 @@ module pbepack_pbe1
 
 contains
 
-   type(pbe1) function pbe1_init(grid, agg, break, growth, ic, name) result(self)
+   type(pbe1) function pbe1_init(grid, gfnc, afnc, bfnc, dfnc, moment, update_a, &
+                                 update_b, update_d, ic, name) result(self)
    !! Initialize 'pbe1' object.
       type(grid1), intent(in), target :: grid
          !! grid object
-      type(aggterm), intent(in), target, optional :: agg
-         !! aggterm object
-      type(breakterm), intent(in), target, optional :: break
-         !! breakterm object
-      type(growthterm), intent(in), target, optional :: growth
-         !! growthterm object
-      procedure(ic1_t), optional :: ic
-         !! initial condition, \( f_0(x) \)
+      procedure(gfnc_t), optional :: gfnc
+         !! growth rate  function, \( g(x,y) \)
+      procedure(afnc_t), optional :: afnc
+         !! aggregation frequency function, \( a(x,x',y) \)
+      procedure(bfnc_t), optional :: bfnc
+         !! breakage frequency function, \( b(x,y) \)
+      procedure(dfnc_t), optional :: dfnc
+         !! daughter distribution function, \( d(x,x',y) \)
+      integer, intent(in), optional :: moment
+         !! moment of \( x \) to be preserved upon aggregation/breakage (> 0)
+      logical, intent(in), optional :: update_a
+         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step
+      logical, intent(in), optional :: update_b
+         !! flag to select if \( b(x,y) \) is to be reevaluated at each step
+      logical, intent(in), optional :: update_d
+         !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step
+      procedure(ic_t), optional :: ic
+         !! initial condition, \( u_0(x) \)
       character(*), intent(in), optional :: name
          !! name
+      integer :: moment_
 
+      ! Grid
       call self%set_grid(grid)
-      if (present(agg)) self%agg => agg
-      if (present(break)) self%break => break
-      if (present(growth)) self%growth => growth
+
+      ! Growth term
+      if (present(gfnc)) then
+         self%growth = growthterm(grid, gfnc, k=3, name=name//":growth")
+      end if
+
+      ! Aggregation
+      moment_ = optval(moment, 1)
+      if (present(afnc)) then
+         self%agg = aggterm(grid, afnc, moment_, optval(update_a, .true.), name=name//":agg")
+      end if
+
+      ! Breakage
+      if (present(bfnc) .neqv. present(dfnc)) then
+         error stop "Arguments 'bfnc' and 'dfnc' must _both_ be present or absent."
+      else if (present(bfnc) .and. present(dfnc)) then
+         self%break = breakterm(grid, bfnc, dfnc, moment_, optval(update_b, .true.), &
+                                optval(update_d, .true.), name=name//":break")
+      end if
+
+      ! Initial condition
       if (present(ic)) self%ic => ic
+
       call self%set_name(name)
 
    end function pbe1_init
@@ -76,20 +109,20 @@ contains
          !! vector(ncells) with net rate of change (birth-death)
 
       result = ZERO
-      if (associated(self%agg)) then
+      if (self%agg%inited) then
          call self%agg%eval(np, y)
          result = result + self%agg%udot
       end if
 
-      if (associated(self%break)) then
+      if (self%break%inited) then
          call self%break%eval(np, y)
          result = result + self%break%udot
       end if
 
-      ! if (associated(self%growth)) then
-      !    call self%growth%eval(np, y)
-      !    result = result + self%growth%result
-      ! end if
+      if (self%growth%inited) then
+         call self%growth%eval(np, y)
+         result = result + self%growth%udot
+      end if
 
       ! ! Net rate
       ! if (present(result)) result = result_

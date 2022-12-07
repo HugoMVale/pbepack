@@ -3,7 +3,7 @@ module test_break1
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
-   use pbepack_break1, only: breakterm
+   use pbepack_pbe1, only: pbe1
    use hrweno_grids, only: grid1
    use utils_tests, only: bconst, duniform
    use stdlib_strings, only: to_string
@@ -34,7 +34,7 @@ contains
 
       integer, parameter :: nc = 200
       type(grid1) :: gx
-      type(breakterm) :: break
+      type(pbe1) :: eq
       real(rk), dimension(nc) :: np, birth, death
       real(rk) :: y(0:0), moment_birth_0, moment_birth_m, moment_death_0, moment_death_m
       integer :: moment, scale
@@ -50,12 +50,12 @@ contains
 
          ! Test different moments
          do moment = 1, 3
-            break = breakterm(bfnc=bconst, dfnc=dfuni, moment=moment, grid=gx, &
-                              update_b=.false.)
+            eq = pbe1(grid=gx, bfnc=bconst, dfnc=dfuni, moment=moment, &
+                      update_b=.false.)
             np = ZERO
             np(nc) = ONE
             y = ZERO
-            call break%eval(np, y, udot_birth=birth, udot_death=death)
+            call eq%break%eval(np, y, udot_birth=birth, udot_death=death)
 
             moment_birth_0 = sum(birth)
             moment_death_0 = sum(death)

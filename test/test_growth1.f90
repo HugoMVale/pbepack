@@ -3,7 +3,7 @@ module test_growth1
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
-   use pbepack_growth1, only: growthterm
+   use pbepack_pbe1, only: pbe1
    use hrweno_grids, only: grid1
    use utils_tests, only: gconst
    use stdlib_strings, only: to_string
@@ -33,18 +33,18 @@ contains
 
       integer, parameter :: nc = 10*3
       type(grid1) :: gx
-      type(growthterm) :: growth
+      type(pbe1) :: eq
       real(rk), dimension(nc) :: u, udot
       real(rk) :: y(0:0), delta_moment(0:1)
       integer :: i
 
       call gx%linear(1._rk, 6._rk, nc)
 
-      growth = growthterm(gfnc=gconst, grid=gx, name="g(x)=1")
+      eq = pbe1(grid=gx, gfnc=gconst, name="pbe with g(x)=1")
       u = ZERO
       u(nc/3 + 1:2*nc/3) = ONE
       y = ZERO
-      call growth%eval(u, y, udot=udot)
+      call eq%growth%eval(u, y, udot=udot)
 
       do i = lbound(delta_moment, 1), ubound(delta_moment, 1)
          delta_moment(i) = sum(udot*gx%width*gx%center**i)/sum(u*gx%width)
@@ -57,7 +57,7 @@ contains
          print *
          write (stderr, '(a18,a24)') "scale type       =", gx%scale
          do i = lbound(delta_moment, 1), ubound(delta_moment, 1)
-            write (stderr, '(a18,(es24.14e3))') "delta_mom("//to_string(i)//")   =", delta_moment(i)
+            write (stderr, '(a18,(es24.14e3))') "delta_moment("//to_string(i)//")  =", delta_moment(i)
          end do
       end if
 

@@ -7,14 +7,14 @@ module pbepack_break1
    implicit none
    private
 
-   public :: breakterm
+   public :: breakterm, bfnc_t, dfnc_t
 
    type, extends(particleterm) :: breakterm
    !! Breakage term class.
       private
-      procedure(bfnc1_t), nopass, pointer :: bfnc => null()
+      procedure(bfnc_t), nopass, pointer :: bfnc => null()
          !! breakage frequency function
-      procedure(dfnc1_t), nopass, pointer :: dfnc => null()
+      procedure(dfnc_t), nopass, pointer :: dfnc => null()
          !! daughter distribution function
       real(rk), allocatable :: b(:)
          !! vector of breakage frequencies
@@ -30,13 +30,12 @@ module pbepack_break1
          !! flag indicating state of vector **d**.
    contains
       procedure, pass(self), public :: eval => breakterm_eval
-      procedure, pass(self), public :: init2 => breakterm_init2
       procedure, pass(self) :: compute_b
       procedure, pass(self) :: compute_d
    end type breakterm
 
    abstract interface
-      pure real(rk) function bfnc1_t(x, y)
+      pure real(rk) function bfnc_t(x, y)
       !! Breakage frequency for 1D system
          import :: rk
          real(rk), intent(in) :: x
@@ -45,7 +44,7 @@ module pbepack_break1
             !! environment vector
       end function
 
-      pure real(rk) function dfnc1_t(xd, xo, y)
+      pure real(rk) function dfnc_t(xd, xo, y)
       !! Daughter distribution for 1D system
          import :: rk
          real(rk), intent(in) :: xd
@@ -63,17 +62,17 @@ module pbepack_break1
 
 contains
 
-   type(breakterm) function breakterm_init(bfnc, dfnc, moment, grid, update_b, update_d, &
+   type(breakterm) function breakterm_init(grid, bfnc, dfnc, moment, update_b, update_d, &
                                            name) result(self)
    !! Initialize 'breakterm' object.
-      procedure(bfnc1_t) :: bfnc
-         !! breakage frequency function, \( b(x,y) \)
-      procedure(dfnc1_t) :: dfnc
-         !! daughter distribution function, \( d(x,x',y) \)
-      integer, intent(in) :: moment
-         !! moment of \( x \) to be conserved upon breakage (>0)
-      type(grid1), intent(in), target, optional :: grid
+      type(grid1), intent(in) :: grid
          !! 'grid1' object
+      procedure(bfnc_t) :: bfnc
+         !! breakage frequency function, \( b(x,y) \)
+      procedure(dfnc_t) :: dfnc
+         !! daughter distribution function, \( d(x,x',y) \)
+      integer, intent(in), optional :: moment
+         !! moment of \( x \) to be conserved upon breakage (>0)
       logical, intent(in), optional :: update_b
          !! flag to select if \( b(x,y) \) is to be reevaluated at each step
       logical, intent(in), optional :: update_d
@@ -81,32 +80,21 @@ contains
       character(*), intent(in), optional :: name
          !! name
 
+      call self%set_grid(grid)
       self%bfnc => bfnc
       self%dfnc => dfnc
-      call self%set_moment(moment)
-      call self%set_name(name)
+      if (present(moment)) call self%set_moment(moment)
       if (present(update_b)) self%update_b = update_b
       if (present(update_d)) self%update_d = update_d
+      call self%set_name(name)
 
-      if (present(grid)) call self%init2(grid)
-
-   end function breakterm_init
-
-   subroutine breakterm_init2(self, grid)
-   !! Initialize(2) 'breakterm' object.
-      class(breakterm), intent(inout) :: self
-         !! object
-      type(grid1), intent(in) :: grid
-         !! grid1 object
-
-      call self%set_grid(grid)
       call self%particleterm_allocations()
       associate (nc => self%grid%ncells)
          allocate (self%b(nc), self%d((nc - 2)*(nc - 1)/2 + 3*(nc - 1)))
       end associate
       self%inited = .true.
 
-   end subroutine breakterm_init2
+   end function breakterm_init
 
    pure subroutine breakterm_eval(self, np, y, udot, udot_birth, udot_death)
    !! Evaluate the rate of breakage at a given instant, using the technique described in

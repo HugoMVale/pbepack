@@ -10,12 +10,12 @@ module pbepack_agg1
    implicit none
    private
 
-   public :: aggterm
+   public :: aggterm, afnc_t
 
    type, extends(particleterm) :: aggterm
    !! Aggregation term class.
       private
-      procedure(afnc1_t), nopass, pointer :: afnc => null()
+      procedure(afnc_t), nopass, pointer :: afnc => null()
          !! aggregation frequency function
       type(spmatrix) :: a
          !! matrix of aggregation frequencies
@@ -27,13 +27,12 @@ module pbepack_agg1
          !! flag indicating state of matrix **a**.
    contains
       procedure, pass(self), public :: eval => aggterm_eval
-      procedure, pass(self), public :: init2 => aggterm_init2
       procedure, pass(self) :: compute_combinations
       procedure, pass(self) :: compute_a
    end type aggterm
 
    abstract interface
-      pure real(rk) function afnc1_t(xa, xb, y)
+      pure real(rk) function afnc_t(xa, xb, y)
       !! Aggregation frequency for 1D system
          import :: rk
          real(rk), intent(in) :: xa
@@ -51,35 +50,25 @@ module pbepack_agg1
 
 contains
 
-   type(aggterm) function aggterm_init(afnc, moment, grid, update_a, name) result(self)
+   type(aggterm) function aggterm_init(grid, afnc, moment, update_a, name) result(self)
    !! Initialize 'aggterm' object.
-      procedure(afnc1_t) :: afnc
-         !! aggregation frequency function, \( a(x,x',y) \)
-      integer, intent(in) :: moment
-         !! moment of \( x \) to be conserved upon aggregation (> 0)
-      type(grid1), intent(in), optional :: grid
+      type(grid1), intent(in) :: grid
          !! 'grid1' object
+      procedure(afnc_t) :: afnc
+         !! aggregation frequency function, \( a(x,x',y) \)
+      integer, intent(in), optional :: moment
+         !! moment of \( x \) to be conserved upon aggregation (> 0)
       logical, intent(in), optional :: update_a
          !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step
       character(*), intent(in), optional :: name
          !! name
 
+      call self%set_grid(grid)
       self%afnc => afnc
-      call self%set_moment(moment)
+      if (present(moment)) call self%set_moment(moment)
       if (present(update_a)) self%update_a = update_a
       call self%set_name(name)
-      if (present(grid)) call self%init2(grid)
 
-   end function aggterm_init
-
-   subroutine aggterm_init2(self, grid)
-   !! Initialize(2) 'aggterm' object.
-      class(aggterm), intent(inout) :: self
-         !! object
-      type(grid1), intent(in) :: grid
-         !! grid1 object
-
-      call self%set_grid(grid)
       call self%particleterm_allocations()
       associate (nc => self%grid%ncells)
          allocate (self%array_comb(nc))
@@ -88,7 +77,7 @@ contains
       call self%compute_combinations()
       self%inited = .true.
 
-   end subroutine aggterm_init2
+   end function aggterm_init
 
    pure subroutine aggterm_eval(self, np, y, udot, udot_birth, udot_death)
    !! Evaluate rate of aggregation at a given instant.

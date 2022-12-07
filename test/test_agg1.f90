@@ -3,7 +3,7 @@ module test_agg1
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
-   use pbepack_agg1, only: aggterm
+   use pbepack_pbe1, only: pbe1
    use hrweno_grids, only: grid1
    use utils_tests
    use stdlib_strings, only: to_string
@@ -32,7 +32,7 @@ contains
 
       integer, parameter :: nc = 200
       type(grid1) :: gx
-      type(aggterm) :: agg
+      type(pbe1) :: eq
       real(rk), dimension(nc) :: np, birth, death
       real(rk) :: y(0:0), moment_birth_0, moment_birth_m, moment_death_0, moment_death_m
       integer :: moment, scale
@@ -48,11 +48,11 @@ contains
 
          ! Test different moments
          do moment = 1, 3
-            agg = aggterm(afnc=aprod, moment=moment, grid=gx, update_a=.false.)
+            eq = pbe1(grid=gx, afnc=aprod, moment=moment, update_a=.false.)
             np = ZERO
             np(1:nc/2 - 1) = ONE
             y = ZERO
-            call agg%eval(np, y, udot_birth=birth, udot_death=death)
+            call eq%agg%eval(np, y, udot_birth=birth, udot_death=death)
 
             moment_birth_0 = sum(birth)
             moment_death_0 = sum(death)

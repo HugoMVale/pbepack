@@ -3,9 +3,6 @@ module test_pbe1
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds, only: rk
-   use pbepack_agg1, only: aggterm
-   use pbepack_break1, only: breakterm
-   use pbepack_growth1, only: growthterm
    use pbepack_pbe1, only: pbe1
    use hrweno_grids, only: grid1
    use utils_tests
@@ -37,9 +34,6 @@ contains
 
       integer, parameter :: nc = 42
       type(grid1) :: gx
-      type(aggterm) :: agg
-      type(breakterm) :: break
-      type(growthterm) :: growth
       type(pbe1) :: eq
       real(rk) :: np(nc), result(nc, 0:3)
       real(rk) :: y(0:0)
@@ -48,29 +42,22 @@ contains
       ! Init linear grid
       call gx%linear(1._rk, 1e3_rk, nc)
 
-      ! Init aggregation term
-      moment = 1
-      agg = aggterm(afnc=aconst, moment=moment, grid=gx, name="agg")
-
-      ! Init breakage term
-      break = breakterm(bfnc=bconst, dfnc=dfuni, moment=moment, grid=gx, name="break")
-
-      ! Init growth term
-      growth = growthterm(gfnc=glinear, grid=gx, name="growth")
-
       ! Init pbe object
-      eq = pbe1(grid=gx, agg=agg, break=break, name="a pbe with several terms")
+      moment = 1
+
+      eq = pbe1(gx, gfnc=glinear, afnc=aconst, bfnc=bconst, dfnc=dfuni, moment=moment, &
+                name="a pbe with several terms")
 
       ! Evaluate pbe at a given point
       np = ZERO
       np(1:nc/2 - 1) = ONE
       y = ZERO
       result = ZERO
-      call agg%eval(np, y, result(:, 1))
-      call break%eval(np, y, result(:, 2))
-      call growth%eval(np, y, result(:, 3))
+      call eq%agg%eval(np, y, result(:, 1))
+      call eq%break%eval(np, y, result(:, 2))
+      call eq%growth%eval(np, y, result(:, 3))
       call eq%eval(np, y, result(:, 0))
-      call check(error, result(:, 0), sum(result(:, 1:2), dim=2))
+      call check(error, result(:, 0), sum(result(:, 1:3), dim=2))
 
    contains
 
