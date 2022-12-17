@@ -7,44 +7,39 @@ module pbepack_basetypes
    implicit none
    private
 
-   public :: base, pbeterm, particleterm
+   public :: pbeterm, particleterm
 
-   type, abstract :: base
-   !! Abstract 'base' class.
+   type, abstract :: pbeterm
+   !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
       character(:), allocatable :: name
          !! object name
       character(:), allocatable :: msg
          !! error message
       integer :: ierr = 0
          !! error code
-      logical :: verbose = .false.
-         !! verbose flag
       type(grid1), pointer :: grid => null()
          !! pointer to grid object
+      real(rk), allocatable :: udot(:)
+         !! net rate of change, \( d\bar{u}/dt \)
+      logical :: inited = .false.
+         !! initialization flag
+      logical :: verbose = .false.
+         !! verbose flag
    contains
       procedure, pass(self) :: set_grid
       procedure, pass(self) :: set_name
       procedure, pass(self) :: error_msg
-   end type base
-
-   type, extends(base), abstract :: pbeterm
-   !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
-      real(rk), allocatable :: udot(:)
-         !! net rate of change, \( du/dt \)
-      logical :: inited = .false.
-         !! initialization flag
-   contains
       procedure, pass(self) :: pbeterm_allocations
    end type pbeterm
 
    type, extends(pbeterm), abstract :: particleterm
-   !! Abstract 1D PBE particle term class (aggregation, breakage).
+   !! Abstract 1D PBE particle term class (aggregation and breakage).
       integer :: moment = 1
-         !! moment of \(x\) to be conserved upon aggregation/breakage
+         !! moment of \(x\) to be preserved upon aggregation/breakage
       real(rk), allocatable :: udot_birth(:)
-         !! rate of birth (source term, +)
+         !! rate of birth
       real(rk), allocatable :: udot_death(:)
-         !! rate of death (sink term, -)
+         !! rate of death
    contains
       procedure, pass(self) :: set_moment
       procedure, pass(self) :: particleterm_allocations
@@ -54,7 +49,7 @@ contains
 
    subroutine set_grid(self, grid)
    !! Setter method for grid.
-      class(base), intent(inout) :: self
+      class(pbeterm), intent(inout) :: self
          !! object
       type(grid1), intent(in), target :: grid
          !! 'grid1' object
@@ -69,7 +64,7 @@ contains
 
    pure subroutine error_msg(self, msg)
    !! Error method.
-      class(base), intent(inout) :: self
+      class(pbeterm), intent(inout) :: self
          !! object
       character(*), intent(in) :: msg
          !! message
@@ -82,7 +77,7 @@ contains
 
    pure subroutine set_name(self, name)
    !! Setter method for name.
-      class(base), intent(inout) :: self
+      class(pbeterm), intent(inout) :: self
          !! object
       character(*), intent(in), optional :: name
          !! name
@@ -96,7 +91,7 @@ contains
       class(particleterm), intent(inout) :: self
          !! object
       integer, intent(in) :: moment
-         !! moment of \( x \) to be conserved upon aggregation
+         !! moment of \( x \) to be preserved upon aggregation/breakage
 
       if (moment > 0) then
          self%moment = moment
