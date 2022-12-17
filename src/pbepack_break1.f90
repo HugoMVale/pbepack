@@ -72,7 +72,7 @@ contains
       procedure(dfnc_t) :: dfnc
          !! daughter distribution function, \( d(x,x',y) \)
       integer, intent(in), optional :: moment
-         !! moment of \( x \) to be conserved upon breakage (>0)
+         !! moment of \( x \) to be preserved upon breakage (>0)
       logical, intent(in), optional :: update_b
          !! flag to select if \( b(x,y) \) is to be reevaluated at each step
       logical, intent(in), optional :: update_d
@@ -109,17 +109,17 @@ contains
       real(rk), intent(in) :: y(:)
          !! environment vector
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change (birth-death), \( du/dt \)
+         !! net rate of change (birth-death), \( d\bar{u}/dt \)
       real(rk), intent(out), optional :: udot_birth(:)
-         !! rate of birth (source term, +)
+         !! rate of birth
       real(rk), intent(out), optional :: udot_death(:)
-         !! rate of death (sink term, -)
+         !! rate of death
 
       real(rk) :: weight(2)
       integer :: i, k
 
       associate (nc => self%grid%ncells, b => self%b, &
-                 birth => self%udot_birth, death => self%udot_death, net => self%udot)
+                 birth => self%udot_birth, death => self%udot_death)
 
          ! Evaluate breakage frequency and daughter distribution kernels
          if (self%update_b .or. self%empty_b) call self%compute_b(y)
@@ -141,8 +141,8 @@ contains
          if (present(udot_birth)) udot_birth = birth
 
          ! Net rate
-         net = birth - death
-         if (present(udot)) udot = net
+         self%udot = birth - death
+         if (present(udot)) udot = self%udot
 
       end associate
 
