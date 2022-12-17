@@ -57,7 +57,7 @@ contains
       procedure(afnc_t) :: afnc
          !! aggregation frequency function, \( a(x,x',y) \)
       integer, intent(in), optional :: moment
-         !! moment of \( x \) to be conserved upon aggregation (> 0)
+         !! moment of \( x \) to be preserved upon aggregation (> 0)
       logical, intent(in), optional :: update_a
          !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step
       character(*), intent(in), optional :: name
@@ -88,18 +88,18 @@ contains
       real(rk), intent(in) :: y(:)
          !! environment vector
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change (birth-death), \( du/dt \)
+         !! net rate of change (birth-death), \( d\bar{u}/dt \)
       real(rk), intent(out), optional :: udot_birth(:)
-         !! rate of birth (source term, +)
+         !! rate of birth
       real(rk), intent(out), optional :: udot_death(:)
-         !! rate of death (sink term, -)
+         !! rate of death
 
       real(rk) :: weight
       integer:: i, j, k, n
 
       associate (nc => self%grid%ncells, &
                  array_comb => self%array_comb, a => self%a, &
-                 birth => self%udot_birth, death => self%udot_death, net => self%udot)
+                 birth => self%udot_birth, death => self%udot_death)
 
          ! Evaluate aggregation frequency for all particle combinations
          if (self%update_a .or. self%empty_a) call self%compute_a(y)
@@ -122,8 +122,8 @@ contains
          if (present(udot_death)) udot_death = death
 
          ! Net rate
-         net = birth - death
-         if (present(udot)) udot = net
+         self%udot = birth - death
+         if (present(udot)) udot = self%udot
 
       end associate
 
