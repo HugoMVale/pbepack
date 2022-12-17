@@ -1,6 +1,6 @@
 module pbepack_pbe1
    use pbepack_kinds
-   use pbepack_basetypes, only: base
+   use pbepack_basetypes, only: pbeterm
    use pbepack_agg1, only: aggterm, afnc_t
    use pbepack_break1, only: breakterm, bfnc_t, dfnc_t
    use pbepack_growth1, only: growthterm, gfnc_t
@@ -11,7 +11,7 @@ module pbepack_pbe1
 
    public :: pbe1
 
-   type, extends(base) :: pbe1
+   type, extends(pbeterm) :: pbe1
    !! 1D PBE class.
       type(aggterm) :: agg
         !! aggregation object
@@ -23,7 +23,7 @@ module pbepack_pbe1
         !! initial condition
    contains
       procedure, pass(self) :: eval => pbe_eval
-      !procedure, pass(self) :: integrate => pbe_integrate
+      procedure, pass(self) :: integrate => pbe_integrate
    end type pbe1
 
    abstract interface
@@ -42,7 +42,7 @@ module pbepack_pbe1
 contains
 
    type(pbe1) function pbe1_init(grid, gfnc, afnc, bfnc, dfnc, moment, update_a, &
-                                 update_b, update_d, ic, name) result(self)
+                                 update_b, update_d, name) result(self)
    !! Initialize 'pbe1' object.
       type(grid1), intent(in), target :: grid
          !! grid object
@@ -62,8 +62,6 @@ contains
          !! flag to select if \( b(x,y) \) is to be reevaluated at each step
       logical, intent(in), optional :: update_d
          !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step
-      procedure(ic_t), optional :: ic
-         !! initial condition, \( u_0(x) \)
       character(*), intent(in), optional :: name
          !! name
       integer :: moment_
@@ -84,20 +82,51 @@ contains
 
       ! Breakage
       if (present(bfnc) .neqv. present(dfnc)) then
-         error stop "Arguments 'bfnc' and 'dfnc' must _both_ be present or absent."
+         call self%error_msg("Arguments 'bfnc' and 'dfnc' must _both_ be present or absent.")
       else if (present(bfnc) .and. present(dfnc)) then
          self%break = breakterm(grid, bfnc, dfnc, moment_, optval(update_b, .true.), &
                                 optval(update_d, .true.), name=name//":break")
       end if
 
-      ! Initial condition
-      if (present(ic)) self%ic => ic
+      ! Source
 
       call self%set_name(name)
 
    end function pbe1_init
 
-   pure subroutine pbe_eval(self, np, y, result)
+   pure subroutine pbe_eval(self, np, y, udot)
+   !! Evaluate rate of aggregation at a given instant.
+      class(pbe1), intent(inout) :: self
+         !! object
+      real(rk), intent(in) :: np(:)
+         !! vector(ncells) with number of particles in cell 'i'
+      real(rk), intent(in) :: y(:)
+         !! environment vector
+      real(rk), intent(out), optional :: udot(:)
+         !! vector(ncells) with net rate of change (birth-death)
+
+      udot = ZERO
+      if (self%agg%inited) then
+         call self%agg%eval(np, y)
+         udot = udot + self%agg%udot
+      end if
+
+      if (self%break%inited) then
+         call self%break%eval(np, y)
+         udot = udot + self%break%udot
+      end if
+
+      if (self%growth%inited) then
+         call self%growth%eval(np, y)
+         udot = udot + self%growth%udot
+      end if
+
+      ! ! Net rate
+      ! if (present(result)) result = result_
+
+   end subroutine pbe_eval
+
+   pure subroutine pbe_integrate(self, np, y, result)
    !! Evaluate rate of aggregation at a given instant.
       class(pbe1), intent(inout) :: self
          !! object
@@ -127,6 +156,6 @@ contains
       ! ! Net rate
       ! if (present(result)) result = result_
 
-   end subroutine pbe_eval
+   end subroutine pbe_integrate
 
 end module pbepack_pbe1
