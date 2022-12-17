@@ -50,7 +50,7 @@ contains
       type(grid1), intent(in) :: grid
          !! 'grid1' object
       procedure(gfnc_t) :: gfnc
-         !! growth rate  function, \( g(x,y) \)
+         !! growth rate  function, \( g(x,\mathbold{y}) \)
       integer, intent(in) :: k
          !! 2*(k-1) order of the WENO reconstruction (1 <= k <= 3)
       character(*), intent(in), optional :: name
@@ -73,15 +73,15 @@ contains
    end function growthterm_init
 
    pure subroutine growthterm_eval(self, u, y, udot)
-   !! Evaluate rate of aggregation at a given instant.
+   !! Evaluate rate of particle growth at a given instant.
       class(growthterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! cell-average number density
+         !! cell-average number density, \( \bar{u} \)
       real(rk), intent(in) :: y(:)
-         !! environment vector
+         !! environment vector, \( \mathbold{y} \)
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change, \( du/dt \)
+         !! net rate of change, \( d\bar{u}/dt \)
 
       integer :: i
 
