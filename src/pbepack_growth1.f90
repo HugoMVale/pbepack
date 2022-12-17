@@ -50,7 +50,7 @@ contains
       type(grid1), intent(in) :: grid
          !! 'grid1' object
       procedure(gfnc_t) :: gfnc
-         !! growth rate  function, \( g(x,\mathbold{y}) \)
+         !! growth rate  function, \( g(x,y) \)
       integer, intent(in) :: k
          !! 2*(k-1) order of the WENO reconstruction (1 <= k <= 3)
       character(*), intent(in), optional :: name
@@ -79,7 +79,7 @@ contains
       real(rk), intent(in) :: u(:)
          !! cell-average number density, \( \bar{u} \)
       real(rk), intent(in) :: y(:)
-         !! environment vector, \( \mathbold{y} \)
+         !! environment vector, \( y \)
       real(rk), intent(out), optional :: udot(:)
          !! net rate of change, \( d\bar{u}/dt \)
 
