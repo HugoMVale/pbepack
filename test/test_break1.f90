@@ -35,7 +35,7 @@ contains
       integer, parameter :: nc = 200
       type(grid1) :: gx
       type(pbe1) :: eq
-      real(rk), dimension(nc) :: np, birth, death
+      real(rk), dimension(nc) :: u, birth, death
       real(rk) :: y(0:0), moment_birth_0, moment_birth_m, moment_death_0, moment_death_m
       integer :: moment, scale
 
@@ -52,15 +52,15 @@ contains
          do moment = 1, 3
             eq = pbe1(grid=gx, bfnc=bconst, dfnc=dfuni, moment=moment, &
                       update_b=.false.)
-            np = ZERO
-            np(nc) = ONE
+            u = ZERO
+            u(nc) = ONE
             y = ZERO
-            call eq%break%eval(np, y, udot_birth=birth, udot_death=death)
+            call eq%break%eval(u, y, udot_birth=birth, udot_death=death)
 
-            moment_birth_0 = sum(birth)
-            moment_death_0 = sum(death)
-            moment_birth_m = sum(birth*gx%center**moment)
-            moment_death_m = sum(death*gx%center**moment)
+            moment_birth_0 = sum(birth*gx%width)
+            moment_death_0 = sum(death*gx%width)
+            moment_birth_m = sum(birth*gx%width*gx%center**moment)
+            moment_death_m = sum(death*gx%width*gx%center**moment)
 
             call check(error, moment_birth_0, moment_death_0*2, rel=.true., thr=1e-2_rk)
             call check(error, moment_birth_m, moment_death_m, rel=.true., thr=1e-8_rk)

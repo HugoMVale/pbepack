@@ -96,7 +96,7 @@ contains
 
    end function breakterm_init
 
-   pure subroutine breakterm_eval(self, np, y, udot, udot_birth, udot_death)
+   pure subroutine breakterm_eval(self, u, y, udot, udot_birth, udot_death)
    !! Evaluate the rate of breakage at a given instant, using the technique described in
    !! Section 3.3 of Kumar and Ramkrishna (1996). The birth/source term is computed according
    !! to a slightly different procedure: the summation is done from the perspective of the
@@ -104,8 +104,8 @@ contains
    !! efficient calculation of the particle split fractions.
       class(breakterm), intent(inout) :: self
          !! object
-      real(rk), intent(in) :: np(:)
-         !! vector(ncells) with number of particles in cell \( i \)
+      real(rk), intent(in) :: u(:)
+         !! cell-average number density, \( \bar{u} \)
       real(rk), intent(in) :: y(:)
          !! environment vector,  \(y\)
       real(rk), intent(out), optional :: udot(:)
@@ -115,7 +115,7 @@ contains
       real(rk), intent(out), optional :: udot_death(:)
          !! rate of death
 
-      real(rk) :: weight(2)
+      real(rk) :: source, weight(2)
       integer :: i, k
 
       associate (nc => self%grid%ncells, b => self%b, &
@@ -126,18 +126,19 @@ contains
          !if (self%update_d .or. self%empty_d) call self%compute_d(y)
 
          ! Death/sink term
-         death = b*np
+         death = b*u
          if (present(udot_death)) udot_death = death
 
          ! Birth/source term
          birth = ZERO
          do k = 2, nc
+            source = death(k)*self%grid%width(k)
             do i = 1, k - 1
                weight = daughter_split(i, k)
-               birth(i) = birth(i) + weight(1)*death(k)
-               birth(i + 1) = birth(i + 1) + weight(2)*death(k)
+               birth(i:i + 1) = birth(i:i + 1) + weight*source
             end do
          end do
+         birth = birth/self%grid%width
          if (present(udot_birth)) udot_birth = birth
 
          ! Net rate

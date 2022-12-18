@@ -79,12 +79,12 @@ contains
 
    end function aggterm_init
 
-   pure subroutine aggterm_eval(self, np, y, udot, udot_birth, udot_death)
+   pure subroutine aggterm_eval(self, u, y, udot, udot_birth, udot_death)
    !! Evaluate rate of aggregation at a given instant.
       class(aggterm), intent(inout) :: self
          !! object
-      real(rk), intent(in) :: np(:)
-         !! vector(ncells) with number of particles in cell \( i \)
+      real(rk), intent(in) :: u(:)
+         !! cell-average number density, \( \bar{u} \)
       real(rk), intent(in) :: y(:)
          !! environment vector, \(y\)
       real(rk), intent(out), optional :: udot(:)
@@ -94,7 +94,7 @@ contains
       real(rk), intent(out), optional :: udot_death(:)
          !! rate of death
 
-      real(rk) :: weight
+      real(rk) :: weight, up(size(u))
       integer:: i, j, k, n
 
       associate (nc => self%grid%ncells, &
@@ -104,6 +104,9 @@ contains
          ! Evaluate aggregation frequency for all particle combinations
          if (self%update_a .or. self%empty_a) call self%compute_a(y)
 
+         ! Number of particles in each cell
+         up = u*self%grid%width
+
          ! Birth term
          birth = ZERO
          do concurrent(i=1:nc)
@@ -112,13 +115,14 @@ contains
                k = array_comb(i)%ib(n)
                weight = array_comb(i)%weight(n)
                birth(i) = birth(i) + &
-                          (ONE - HALF*delta_kronecker(j, k))*weight*a%get(j, k)*np(j)*np(k)
+                          (ONE - HALF*delta_kronecker(j, k))*weight*a%get(j, k)*up(j)*up(k)
             end do
          end do
+         birth = birth/self%grid%width
          if (present(udot_birth)) udot_birth = birth
 
          ! Death term
-         death = np*a%multvec(np)
+         death = u*a%multvec(up)
          if (present(udot_death)) udot_death = death
 
          ! Net rate
