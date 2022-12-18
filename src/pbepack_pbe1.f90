@@ -55,15 +55,15 @@ contains
       procedure(dfnc_t), optional :: dfnc
          !! daughter distribution function, \( d(x,x',y) \)
       integer, intent(in), optional :: moment
-         !! moment of \( x \) to be preserved upon aggregation/breakage (> 0)
+         !! moment of \( x \) to be preserved upon aggregation/breakage (default=1)
       logical, intent(in), optional :: update_a
-         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step
+         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step (defaul=true)
       logical, intent(in), optional :: update_b
-         !! flag to select if \( b(x,y) \) is to be reevaluated at each step
+         !! flag to select if \( b(x,y) \) is to be reevaluated at each step (defaul=true)
       logical, intent(in), optional :: update_d
-         !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step
+         !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step (defaul=true)
       character(*), intent(in), optional :: name
-         !! name
+         !! name (default="")
       integer :: moment_
 
       ! Grid
@@ -90,39 +90,44 @@ contains
 
       ! Source
 
+      call self%pbeterm_allocations()
       call self%set_name(name)
+      self%inited = .true.
 
    end function pbe1_init
 
-   pure subroutine pbe_eval(self, np, y, udot)
-   !! Evaluate rate of aggregation at a given instant.
+   subroutine pbe_eval(self, u, y, udot)
+   !! Evaluate total rate of change at a given instant.
       class(pbe1), intent(inout) :: self
          !! object
-      real(rk), intent(in) :: np(:)
-         !! vector(ncells) with number of particles in cell 'i'
+      real(rk), intent(in) :: u(:)
+         !! cell-average number density, \( \bar{u} \)
       real(rk), intent(in) :: y(:)
-         !! environment vector
+         !! environment vector, \( y \)
       real(rk), intent(out), optional :: udot(:)
-         !! vector(ncells) with net rate of change (birth-death)
+         !!  total rate of change, \( d\bar{u}/dt \)
 
-      udot = ZERO
-      if (self%agg%inited) then
-         call self%agg%eval(np, y)
-         udot = udot + self%agg%udot
-      end if
+      if (.not. self%inited) call self%error_msg("Error: pbe not initialized.")
 
-      if (self%break%inited) then
-         call self%break%eval(np, y)
-         udot = udot + self%break%udot
-      end if
+      associate (udot_ => self%udot)
+         udot_ = ZERO
+         if (self%agg%inited) then
+            call self%agg%eval(u, y)
+            udot_ = udot_ + self%agg%udot
+         end if
 
-      if (self%growth%inited) then
-         call self%growth%eval(np, y)
-         udot = udot + self%growth%udot
-      end if
+         if (self%break%inited) then
+            call self%break%eval(u, y)
+            udot_ = udot_ + self%break%udot
+         end if
 
-      ! ! Net rate
-      ! if (present(result)) result = result_
+         if (self%growth%inited) then
+            call self%growth%eval(u, y)
+            udot_ = udot_ + self%growth%udot
+         end if
+
+         if (present(udot)) udot = udot_
+      end associate
 
    end subroutine pbe_eval
 
