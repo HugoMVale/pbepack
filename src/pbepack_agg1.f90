@@ -57,11 +57,11 @@ contains
       procedure(afnc_t) :: afnc
          !! aggregation frequency function, \( a(x,x',y) \)
       integer, intent(in), optional :: moment
-         !! moment of \( x \) to be preserved upon aggregation (> 0)
+         !! moment of \( x \) to be preserved upon aggregation (default=1)
       logical, intent(in), optional :: update_a
-         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step
+         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step (defaul=true)
       character(*), intent(in), optional :: name
-         !! name
+         !! name (default="")
 
       call self%set_grid(grid)
       self%afnc => afnc
@@ -86,7 +86,7 @@ contains
       real(rk), intent(in) :: np(:)
          !! vector(ncells) with number of particles in cell \( i \)
       real(rk), intent(in) :: y(:)
-         !! environment vector
+         !! environment vector, \(y\)
       real(rk), intent(out), optional :: udot(:)
          !! net rate of change (birth-death), \( d\bar{u}/dt \)
       real(rk), intent(out), optional :: udot_birth(:)

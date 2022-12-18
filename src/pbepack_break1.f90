@@ -72,13 +72,13 @@ contains
       procedure(dfnc_t) :: dfnc
          !! daughter distribution function, \( d(x,x',y) \)
       integer, intent(in), optional :: moment
-         !! moment of \( x \) to be preserved upon breakage (>0)
+         !! moment of \( x \) to be preserved upon breakage (default=1)
       logical, intent(in), optional :: update_b
-         !! flag to select if \( b(x,y) \) is to be reevaluated at each step
+         !! flag to select if \( b(x,y) \) is to be reevaluated at each step (default=true)
       logical, intent(in), optional :: update_d
-         !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step
+         !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step (default=true)
       character(*), intent(in), optional :: name
-         !! name
+         !! name (default="")
 
       call self%set_grid(grid)
       self%bfnc => bfnc
@@ -107,7 +107,7 @@ contains
       real(rk), intent(in) :: np(:)
          !! vector(ncells) with number of particles in cell \( i \)
       real(rk), intent(in) :: y(:)
-         !! environment vector
+         !! environment vector,  \(y\)
       real(rk), intent(out), optional :: udot(:)
          !! net rate of change (birth-death), \( d\bar{u}/dt \)
       real(rk), intent(out), optional :: udot_birth(:)
