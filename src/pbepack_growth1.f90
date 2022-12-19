@@ -48,7 +48,7 @@ contains
    type(growthterm) function growthterm_init(grid, gfnc, k, name) result(self)
    !! Initialize 'growthterm' object.
       type(grid1), intent(in) :: grid
-         !! 'grid1' object
+         !! `grid1` object
       procedure(gfnc_t) :: gfnc
          !! growth rate function, \( g(x,y) \)
       integer, intent(in) :: k
