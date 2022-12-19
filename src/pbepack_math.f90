@@ -16,17 +16,17 @@ contains
 
    end function delta_kronecker
 
-   elemental real(rk) function boxcar(x, a, b, c) result(res)
+   elemental real(rk) function boxcar(x, a, b, height) result(res)
    !! Boxcar function.
       real(rk), intent(in) :: x
          !! argument
       real(rk), intent(in) :: a, b
          !! interval limit \( a < b \)
-      real(rk), intent(in) :: c
+      real(rk), intent(in) :: height
          !! pulse height
 
       res = ZERO
-      if (x > a .and. x < b) res = c
+      if (x > a .and. x < b) res = height
 
    end function boxcar
 
