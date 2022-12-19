@@ -29,6 +29,7 @@ module pbepack_basetypes
       procedure, pass(self) :: set_grid
       procedure, pass(self) :: set_name
       procedure, pass(self) :: error_msg
+      procedure, pass(self) :: check_inited
       procedure, pass(self) :: pbeterm_allocations
    end type pbeterm
 
@@ -71,18 +72,31 @@ contains
 
       self%msg = msg
       self%ierr = 1
-      error stop self%msg
+      error stop "Object: "//self%name//". Message: "//self%msg
 
    end subroutine
 
-   pure subroutine set_name(self, name)
+   pure subroutine set_name(self, name, default)
    !! Setter method for name.
       class(pbeterm), intent(inout) :: self
          !! object
       character(*), intent(in), optional :: name
          !! name
+      character(*), intent(in), optional :: default
+         !! default name
 
-      self%name = optval(name, "")
+      self%name = optval(name, optval(default, ""))
+
+   end subroutine
+
+   pure subroutine check_inited(self)
+   !! Error method.
+      class(pbeterm), intent(inout) :: self
+         !! object
+
+      if (.not. self%inited) then
+         call self%error_msg("Object not initialized.")
+      end if
 
    end subroutine
 
