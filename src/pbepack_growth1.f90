@@ -52,9 +52,9 @@ contains
       procedure(gfnc_t) :: gfnc
          !! growth rate function, \( g(x,y) \)
       integer, intent(in) :: k
-         !! 2*(k-1) order of the WENO reconstruction (default=3)
+         !! \( 2(k-1) \) order of the WENO reconstruction (default=3)
       character(*), intent(in), optional :: name
-         !! name (default="")
+         !! name (default="growth-term")
 
       ! Set properties
       call self%set_name(name, "growth-term")

@@ -53,15 +53,15 @@ contains
    type(aggterm) function aggterm_init(grid, afnc, moment, update_a, name) result(self)
    !! Initialize 'aggterm' object.
       type(grid1), intent(in) :: grid
-         !! 'grid1' object
+         !! `grid1` object
       procedure(afnc_t) :: afnc
          !! aggregation frequency function, \( a(x,x',y) \)
       integer, intent(in), optional :: moment
          !! moment of \( x \) to be preserved upon aggregation (default=1)
       logical, intent(in), optional :: update_a
-         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step (defaul=true)
+         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step (default=true)
       character(*), intent(in), optional :: name
-         !! name (default="")
+         !! name (default="agg-term")
 
       ! Set parameters
       call self%set_name(name, "agg-term")

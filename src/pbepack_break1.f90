@@ -66,7 +66,7 @@ contains
                                            name) result(self)
    !! Initialize 'breakterm' object.
       type(grid1), intent(in) :: grid
-         !! 'grid1' object
+         !! `grid1` object
       procedure(bfnc_t) :: bfnc
          !! breakage frequency function, \( b(x,y) \)
       procedure(dfnc_t) :: dfnc
@@ -78,7 +78,7 @@ contains
       logical, intent(in), optional :: update_d
          !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step (default=true)
       character(*), intent(in), optional :: name
-         !! name (default="")
+         !! name (default="break-term")
 
       ! Set parameters
       call self%set_name(name, "break-term")
