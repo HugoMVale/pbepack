@@ -56,9 +56,12 @@ contains
       character(*), intent(in), optional :: name
          !! name (default="")
 
+      ! Set properties
+      call self%set_name(name, "growth-term")
       call self%set_grid(grid)
       self%gfnc => gfnc
-      call self%set_name(name)
+
+      ! Allocate stuff
       call self%pbeterm_allocations()
       associate (nc => self%grid%ncells, gx => self%grid)
          if (gx%scale == "linear") then
@@ -85,8 +88,11 @@ contains
 
       integer :: i
 
+      call self%check_inited()
+
       associate (nc => self%grid%ncells, gx => self%grid, uleft => self%uleft, &
                  uright => self%uright, flux_edges => self%flux_edges)
+
          ! Get reconstructed values at cell boundaries
          call self%wenorec%reconstruct(u, uleft, uright)
 
@@ -96,7 +102,7 @@ contains
          end do
 
          ! Apply problem-specific flux constraints at domain boundaries
-         flux_edges(0) = 0
+         flux_edges(0) = ZERO
          flux_edges(nc) = flux_edges(nc - 1)
 
          ! Evaluate du/dt

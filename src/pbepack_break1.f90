@@ -80,14 +80,16 @@ contains
       character(*), intent(in), optional :: name
          !! name (default="")
 
+      ! Set parameters
+      call self%set_name(name, "break-term")
       call self%set_grid(grid)
       self%bfnc => bfnc
       self%dfnc => dfnc
       if (present(moment)) call self%set_moment(moment)
       if (present(update_b)) self%update_b = update_b
       if (present(update_d)) self%update_d = update_d
-      call self%set_name(name)
 
+      ! Allocate stuff
       call self%particleterm_allocations()
       associate (nc => self%grid%ncells)
          allocate (self%b(nc), self%d((nc - 2)*(nc - 1)/2 + 3*(nc - 1)))
@@ -117,6 +119,8 @@ contains
 
       real(rk) :: source, weight(2)
       integer :: i, k
+
+      call self%check_inited()
 
       associate (nc => self%grid%ncells, b => self%b, &
                  birth => self%udot_birth, death => self%udot_death)

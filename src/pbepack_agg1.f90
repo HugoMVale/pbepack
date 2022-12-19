@@ -63,12 +63,14 @@ contains
       character(*), intent(in), optional :: name
          !! name (default="")
 
+      ! Set parameters
+      call self%set_name(name, "agg-term")
       call self%set_grid(grid)
       self%afnc => afnc
       if (present(moment)) call self%set_moment(moment)
       if (present(update_a)) self%update_a = update_a
-      call self%set_name(name)
 
+      ! Allocate and pre-compute stuff
       call self%particleterm_allocations()
       associate (nc => self%grid%ncells)
          allocate (self%array_comb(nc))
@@ -96,6 +98,8 @@ contains
 
       real(rk) :: weight, up(size(u))
       integer:: i, j, k, n
+
+      call self%check_inited()
 
       associate (nc => self%grid%ncells, &
                  array_comb => self%array_comb, a => self%a, &
