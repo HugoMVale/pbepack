@@ -40,9 +40,8 @@ contains
 
       call gx%linear(1._rk, 6._rk, nc)
 
-      eq = pbe1(grid=gx, gfnc=gconst, name="pbe with g(x)=1")
-      u = ZERO
-      u(nc/3 + 1:2*nc/3) = ONE
+      eq = pbe1(grid=gx, gfnc=gconst, name="test_moment_conservation")
+      u = ZERO; u(nc/3 + 1:2*nc/3) = ONE
       y = ZERO
       call eq%growth%eval(u, y, udot=udot)
 

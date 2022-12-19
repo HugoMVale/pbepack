@@ -50,10 +50,9 @@ contains
 
          ! Test different moments
          do moment = 1, 3
-            eq = pbe1(grid=gx, bfnc=bconst, dfnc=dfuni, moment=moment, &
-                      update_b=.false.)
-            u = ZERO
-            u(nc) = ONE
+            eq = pbe1(grid=gx, bfnc=bconst, dfnc=dfuni, moment=moment, update_b=.false., &
+                      name="test_moment_conservation")
+            u = ZERO; u(nc) = ONE
             y = ZERO
             call eq%break%eval(u, y, udot_birth=birth, udot_death=death)
 

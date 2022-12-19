@@ -48,9 +48,9 @@ contains
 
          ! Test different moments
          do moment = 1, 3
-            eq = pbe1(grid=gx, afnc=aprod, moment=moment, update_a=.false.)
-            u = ZERO
-            u(1:nc/2 - 1) = ONE
+            eq = pbe1(grid=gx, afnc=aprod, moment=moment, update_a=.false., &
+                      name="test_moment_conservation")
+            u = ZERO; u(1:nc/2 - 1) = ONE
             y = ZERO
             call eq%agg%eval(u, y, udot_birth=birth, udot_death=death)
 
