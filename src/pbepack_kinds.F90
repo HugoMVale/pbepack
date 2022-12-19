@@ -1,5 +1,5 @@
 module pbepack_kinds
-!! Aux module to define real precision.
+!! Real kinds and common numeric constants.
    use, intrinsic :: iso_fortran_env, only: real32, real64
    implicit none
    private

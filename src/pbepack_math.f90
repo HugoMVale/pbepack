@@ -1,12 +1,12 @@
 module pbepack_math
-!! This module implements some auxiliary math tools.
+!! Auxiliary math functions.
    use pbepack_kinds
    implicit none
    public
 
 contains
 
-   pure real(rk) function delta_kronecker(i, j) result(res)
+   elemental real(rk) function delta_kronecker(i, j) result(res)
    !! Delta kronecker \( \delta_{i,j} \).
       integer, intent(in) :: i, j
          !! integer

@@ -1,6 +1,6 @@
 module pbepack_aggtypes
-!!   This module implements two derived data types to store information about particle
-!! combinations, as required for evaluating aggregation birth terms.
+!!   Derived data types to store information about particle combinations, as required for
+!! evaluating aggregation birth terms.
    use pbepack_kinds
    use ftlListIntModule
    use ftlListDoubleModule

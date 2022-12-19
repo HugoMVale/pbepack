@@ -1,6 +1,5 @@
 module pbepack_agg1
-!! This module implements derived types and procedures to compute the aggregation term
-!! for 1D PBEs.
+!! Derived types and procedures to compute the aggregation term for 1D PBEs.
    use pbepack_kinds
    use pbepack_math, only: delta_kronecker
    use pbepack_algebra, only: spmatrix

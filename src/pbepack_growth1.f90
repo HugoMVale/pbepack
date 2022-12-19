@@ -1,6 +1,5 @@
 module pbepack_growth1
-!! This module implements derived types and procedures to compute the growth term
-!! for 1D PBEs.
+!! Derived types and procedures to compute the growth term for 1D PBEs.
    use pbepack_kinds
    use pbepack_basetypes, only: pbeterm
    use hrweno_grids, only: grid1

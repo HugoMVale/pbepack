@@ -1,5 +1,5 @@
 module pbepack_algebra
-!! This module implements special array types.
+!! Special array types.
    use pbepack_kinds
    implicit none
    private

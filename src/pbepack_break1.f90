@@ -1,6 +1,5 @@
 module pbepack_break1
-!! This module implements derived types and procedures to compute the breakage term
-!! for 1D PBEs.
+!! Derived types and procedures to compute the breakage term for 1D PBEs.
    use pbepack_kinds
    use pbepack_basetypes, only: particleterm
    use hrweno_grids, only: grid1
