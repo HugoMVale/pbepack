@@ -44,16 +44,20 @@ contains
    !! Constructor 'comblist'.
       class(comblist), intent(inout) :: self
          !! object
+
       call self%ia%New
       call self%ib%New
       call self%weight%New
+
    end subroutine list_new
 
    pure integer function list_size(self) result(res)
    !! Size(comblist).
       class(comblist), intent(in) :: self
          !! object
+
       res = self%ia%Size()
+
    end function list_size
 
    impure subroutine list_append(self, ia, ib, weight)
@@ -64,18 +68,22 @@ contains
          !! particle index
       real(rk) :: weight
          !! weight
+
       call self%ia%PushBack(ia)
       call self%ib%PushBack(ib)
       call self%weight%PushBack(weight)
+
    end subroutine list_append
 
    impure subroutine list_clear(self)
    !! Clear 'comblist'.
       class(comblist), intent(inout) :: self
          !! object
+
       call self%ia%Clear
       call self%ib%Clear
       call self%weight%Clear
+
    end subroutine list_clear
 
    impure subroutine list_toarray(self, array)
@@ -84,9 +92,11 @@ contains
          !! object
       type(combarray), intent(inout) :: array
          !! target array
+
       call self%ia%CopyToArray(array%ia)
       call self%ib%CopyToArray(array%ib)
       call self%weight%CopyToArray(array%weight)
+
    end subroutine list_toarray
 
    pure subroutine array_alloc(self, n)
@@ -95,16 +105,20 @@ contains
          !! object
       integer, intent(in) :: n
          !! array size
+
       allocate (self%ia(n))
       allocate (self%ib(n))
       allocate (self%weight(n))
+
    end subroutine array_alloc
 
    pure integer function array_size(self) result(res)
    !! Size(combarray).
       class(combarray), intent(in) :: self
          !! object
+
       res = size(self%ia)
+
    end function array_size
 
 end module pbepack_aggtypes
