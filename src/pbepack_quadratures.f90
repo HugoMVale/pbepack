@@ -5,7 +5,7 @@ module pbepack_quadratures
    implicit none
    private
 
-   public :: quad1_r1
+   public :: quadgrid1
 
    abstract interface
       pure real(rk) function fx(x)
@@ -16,100 +16,43 @@ module pbepack_quadratures
       end function
    end interface
 
-   ! interface quad1
-   !    module procedure :: quad1_r1
-   ! end interface
-
 contains
 
-   pure function cellavg1(fnc, grid) result(res)
+   pure function quadgrid1(fnc, grid, average) result(res)
+   !! Quadrature of \( f(x) \) over user-supplied grid, using Simpson's rule.
       procedure(fx) :: fnc
-         !! function f(x) to average over grid cells
+         !! function f(x) to integrate/average over grid cells
       type(grid1), intent(in) :: grid
-         !! grid object
-      real(rk), dimension(grid%ncells) :: res
+         !! `grid1` object
+      logical, intent(in), optional :: average
+         !! flag to compute cell-average instead of cell-integral
+      real(rk) :: res(grid%ncells)
 
       real(rk) :: fedges(0:grid%ncells), fcenter(grid%ncells)
-      integer :: i, nc
+      integer :: i
 
-      nc = grid%ncells
+      associate (nc => grid%ncells)
 
-      do concurrent(i=0:nc)
-         fedges(i) = fnc(grid%edges(i))
-      end do
-
-      do concurrent(i=1:nc)
-         fcenter(i) = fnc(grid%center(i))
-      end do
-
-      res = (4*fcenter + fedges(0:nc - 1) + fedges(1:nc))/6
-
-   end function cellavg1
-
-   pure function quad1(fnc, xedges, order, average) result(res)
-   !! Quadrature of \( f(x) \) over user-supplied grid.
-      procedure(fx) :: fnc
-         !! function f(x) to integrate
-      real(rk), intent(in) :: xedges(0:)
-         !! edges of the integration grid
-      integer, intent(in) :: order
-         !! order of the integration (order = 2 or 3)
-      logical, intent(in), optional :: average
-         !! flag to compute average of f(x) rather than integral
-      real(rk) :: res(size(xedges) - 1)
-
-      real(rk) :: fvalues(0:size(xedges) - 1)
-      integer :: i, nc
-
-      nc = size(xedges) - 1
-
-      ! Evaluate f(x) at cell edges
-      do concurrent(i=0:nc)
-         fvalues(i) = fnc(xedges(i))
-      end do
-
-      ! Compute 2nd order approx (trapezium rule)
-      res = (fvalues(0:nc - 1) + fvalues(1:nc))/2
-
-      ! Compute 3rd order approx (Simpson's rule)
-      select case (order)
-      case (2)
-      case (3)
-         do concurrent(i=1:nc)
-            fvalues(i) = fnc((xedges(i - 1) + xedges(i))/2)
+         ! Evaluate f(x) at grid edges
+         do concurrent(i=0:nc)
+            fedges(i) = fnc(grid%edges(i))
          end do
-         res = (res + 2*fvalues(1:nc))/3
-      case default
-         error stop "Invalid 'order'"
-      end select
 
-      ! Convert integral-average to integral
-      if (.not. (optval(average, .false.))) then
-         res = res*(xedges(1:nc) - xedges(0:nc - 1))
-      end if
+         ! Evaluate f(x) at grid centers
+         do concurrent(i=1:nc)
+            fcenter(i) = fnc(grid%center(i))
+         end do
 
-   end function quad1
+         ! Cell-average using Simpson's rule
+         res = (4*fcenter + fedges(0:nc - 1) + fedges(1:nc))/6
 
-   pure real(rk) function quad1_r1(fnc, a, b, order) result(res)
-   !! Integral of \( f(x) \) over interval [a,b].
-      procedure(fx) :: fnc
-         !! function f(x) to integrate
-      real(rk), intent(in) :: a
-         !! lower limit of the integration interval
-      real(rk), intent(in) :: b
-         !! upper limit of the integration interval
-      integer, intent(in) :: order
-         !! order of the integration (order = 2 or 3)
+         ! Convert cell-average to cell-integral
+         if (.not. (optval(average, .false.))) then
+            res = res*grid%width
+         end if
 
-      ! Compute 2nd order approx (trapezium rule)
-      res = (fnc(a) + fnc(b))/2
+      end associate
 
-      ! Compute 3rd order approx (Simpson's rule)
-      if (order == 3) then
-         res = (res + 2*fnc((a + b)/2))/3
-      end if
-      res = res*(b - a)
-
-   end function quad1_r1
+   end function quadgrid1
 
 end module pbepack_quadratures
