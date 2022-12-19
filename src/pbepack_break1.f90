@@ -63,7 +63,7 @@ contains
 
    type(breakterm) function breakterm_init(grid, bfnc, dfnc, moment, update_b, update_d, &
                                            name) result(self)
-   !! Initialize 'breakterm' object.
+   !! Initialize `breakterm` object.
       type(grid1), intent(in) :: grid
          !! `grid1` object
       procedure(bfnc_t) :: bfnc

@@ -50,7 +50,7 @@ module pbepack_agg1
 contains
 
    type(aggterm) function aggterm_init(grid, afnc, moment, update_a, name) result(self)
-   !! Initialize 'aggterm' object.
+   !! Initialize `aggterm` object.
       type(grid1), intent(in) :: grid
          !! `grid1` object
       procedure(afnc_t) :: afnc
