@@ -26,8 +26,8 @@ module pbepack_agg1
          !! flag indicating state of matrix **a**.
    contains
       procedure, pass(self), public :: eval => aggterm_eval
-      procedure, pass(self) :: compute_combinations
-      procedure, pass(self) :: compute_a
+      procedure, pass(self), private :: compute_combinations
+      procedure, pass(self), private :: compute_a
    end type aggterm
 
    abstract interface
