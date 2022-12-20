@@ -95,7 +95,7 @@ contains
       class(pbeterm), intent(inout) :: self
          !! object
       type(grid1), intent(in), target :: grid
-         !! 'grid1' object
+         !! `grid1` object
 
       if (grid%ncells > 1) then
          self%grid => grid
