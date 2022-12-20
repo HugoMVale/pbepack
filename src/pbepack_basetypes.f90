@@ -7,29 +7,34 @@ module pbepack_basetypes
    implicit none
    private
 
-   public :: pbeterm, particleterm
+   public :: base, pbeterm, particleterm
 
-   type, abstract :: pbeterm
-   !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
+   type, abstract :: base
+   !! Abstract `base` class.
       character(:), allocatable :: name
          !! object name
       character(:), allocatable :: msg
          !! error message
       integer :: ierr = 0
          !! error code
-      type(grid1), pointer :: grid => null()
-         !! pointer to grid object
-      real(rk), allocatable :: udot(:)
-         !! net rate of change, \( d\bar{u}/dt \)
       logical :: inited = .false.
          !! initialization flag
       logical :: verbose = .false.
          !! verbose flag
    contains
-      procedure, pass(self) :: set_grid
       procedure, pass(self) :: set_name
       procedure, pass(self) :: error_msg
       procedure, pass(self) :: check_inited
+   end type base
+
+   type, extends(base), abstract :: pbeterm
+   !! Abstract 1D PBE term class (e.g., aggregation, growth, etc.).
+      type(grid1), pointer :: grid => null()
+         !! pointer to grid object
+      real(rk), allocatable :: udot(:)
+         !! net rate of change, \( d\bar{u}/dt \)
+   contains
+      procedure, pass(self) :: set_grid
       procedure, pass(self) :: pbeterm_allocations
    end type pbeterm
 
@@ -48,24 +53,9 @@ module pbepack_basetypes
 
 contains
 
-   subroutine set_grid(self, grid)
-   !! Setter method for grid.
-      class(pbeterm), intent(inout) :: self
-         !! object
-      type(grid1), intent(in), target :: grid
-         !! 'grid1' object
-
-      if (grid%ncells > 1) then
-         self%grid => grid
-      else
-         call self%error_msg("Invalid 'grid'.")
-      end if
-
-   end subroutine
-
    pure subroutine error_msg(self, msg)
    !! Error method.
-      class(pbeterm), intent(inout) :: self
+      class(base), intent(inout) :: self
          !! object
       character(*), intent(in) :: msg
          !! message
@@ -78,7 +68,7 @@ contains
 
    pure subroutine set_name(self, name, default)
    !! Setter method for name.
-      class(pbeterm), intent(inout) :: self
+      class(base), intent(inout) :: self
          !! object
       character(*), intent(in), optional :: name
          !! name
@@ -90,12 +80,27 @@ contains
    end subroutine
 
    pure subroutine check_inited(self)
-   !! Error method.
-      class(pbeterm), intent(inout) :: self
+   !! Check initialization method.
+      class(base), intent(inout) :: self
          !! object
 
       if (.not. self%inited) then
          call self%error_msg("Object not initialized.")
+      end if
+
+   end subroutine
+
+   subroutine set_grid(self, grid)
+   !! Setter method for grid.
+      class(pbeterm), intent(inout) :: self
+         !! object
+      type(grid1), intent(in), target :: grid
+         !! 'grid1' object
+
+      if (grid%ncells > 1) then
+         self%grid => grid
+      else
+         call self%error_msg("Invalid 'grid'.")
       end if
 
    end subroutine
@@ -116,7 +121,7 @@ contains
    end subroutine
 
    pure subroutine pbeterm_allocations(self)
-   !! Allocator for arrays of 'pbeterm' class.
+   !! Allocator for arrays of `pbeterm` class.
       class(pbeterm), intent(inout) :: self
          !! object
 
@@ -129,7 +134,7 @@ contains
    end subroutine
 
    pure subroutine particleterm_allocations(self)
-   !! Allocator for arrays of 'particleterm' class.
+   !! Allocator for arrays of `particleterm` class.
       class(particleterm), intent(inout) :: self
          !! object
 
