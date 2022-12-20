@@ -57,7 +57,7 @@ contains
       res = x**2
    end function
 
-   pure real(rk) function duniform(xd, xo, y, m) result(res)
+   pure real(rk) function duniform(xd, xo, y, moment) result(res)
    !! Uniform daughter distribution kernel for 1D system
       real(rk), intent(in) :: xd
          !! internal coordinate of daughter particle
@@ -65,11 +65,11 @@ contains
          !! internal coordinate of original particle
       real(rk), intent(in) :: y(:)
          !! environment vector
-      integer, intent(in), optional :: m
+      integer, intent(in), optional :: moment
          !! moment of \( x \) conserved during breakage
-      integer :: m_
-      m_ = optval(m, 1)
-      res = (TWO*m_/xo**m_)*xd**(m_ - 1)
+      integer :: m
+      m = optval(moment, 1)
+      res = (TWO*m/xo**m)*xd**(m - 1)
    end function
 
    pure real(rk) function gconst(x, y) result(res)
