@@ -41,7 +41,7 @@ module pbepack_aggtypes
 contains
 
    impure subroutine list_new(self)
-   !! Constructor 'comblist'.
+   !! Constructor `comblist`.
       class(comblist), intent(inout) :: self
          !! object
 
@@ -52,7 +52,7 @@ contains
    end subroutine list_new
 
    pure integer function list_size(self) result(res)
-   !! Size(comblist).
+   !! Size of `comblist`.
       class(comblist), intent(in) :: self
          !! object
 
@@ -61,7 +61,7 @@ contains
    end function list_size
 
    impure subroutine list_append(self, ia, ib, weight)
-   !! Append values to 'comblist'.
+   !! Append values to `comblist` object.
       class(comblist), intent(inout) :: self
          !! object
       integer :: ia, ib
@@ -76,7 +76,7 @@ contains
    end subroutine list_append
 
    impure subroutine list_clear(self)
-   !! Clear 'comblist'.
+   !! Clear `comblist` object.
       class(comblist), intent(inout) :: self
          !! object
 
@@ -87,7 +87,7 @@ contains
    end subroutine list_clear
 
    impure subroutine list_toarray(self, array)
-   !! Copy contents of 'comblist' to array of same type.
+   !! Copy contents of `comblist` object to array of same type.
       class(comblist), intent(inout) :: self
          !! object
       type(combarray), intent(inout) :: array
@@ -100,7 +100,7 @@ contains
    end subroutine list_toarray
 
    pure subroutine array_alloc(self, n)
-   !! Allocate 'combarray'.
+   !! Allocate `combarray`.
       class(combarray), intent(inout) :: self
          !! object
       integer, intent(in) :: n
@@ -113,7 +113,7 @@ contains
    end subroutine array_alloc
 
    pure integer function array_size(self) result(res)
-   !! Size(combarray).
+   !! Size of `combarray`.
       class(combarray), intent(in) :: self
          !! object
 
