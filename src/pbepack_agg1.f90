@@ -147,8 +147,8 @@ contains
 
       ! The array is symmetric
       associate (nc => self%grid%ncells, x => self%grid%center)
-         do j = 1, nc
-            do i = 1, j
+         do concurrent(j=1:nc)
+            do concurrent(i=1:j)
                call self%a%set(i, j, self%afnc(x(i), x(j), y))
             end do
          end do
