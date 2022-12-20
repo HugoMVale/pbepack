@@ -3,7 +3,7 @@ module test_growth1
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
-   use pbepack_pbe1, only: pbe1
+   use pbepack_pbe1, only: pbe
    use hrweno_grids, only: grid1
    use utils_tests, only: gconst
    use stdlib_strings, only: to_string
@@ -33,14 +33,14 @@ contains
 
       integer, parameter :: nc = 10*3
       type(grid1) :: gx
-      type(pbe1) :: eq
+      type(pbe) :: eq
       real(rk), dimension(nc) :: u, udot
       real(rk) :: y(0:0), delta_moment(0:1)
       integer :: i
 
       call gx%linear(1._rk, 6._rk, nc)
 
-      eq = pbe1(grid=gx, gfnc=gconst, name="test_moment_conservation")
+      eq = pbe(grid=gx, gfnc=gconst, name="test_moment_conservation")
       u = ZERO; u(nc/3 + 1:2*nc/3) = ONE
       y = ZERO
       call eq%growth%eval(u, y, udot=udot)
