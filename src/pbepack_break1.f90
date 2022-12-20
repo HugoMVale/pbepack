@@ -29,8 +29,8 @@ module pbepack_break1
          !! flag indicating state of vector **d**.
    contains
       procedure, pass(self), public :: eval => breakterm_eval
-      procedure, pass(self) :: compute_b
-      procedure, pass(self) :: compute_d
+      procedure, pass(self), private :: compute_b
+      procedure, pass(self), private :: compute_d
    end type breakterm
 
    abstract interface
