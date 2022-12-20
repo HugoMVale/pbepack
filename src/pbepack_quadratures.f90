@@ -19,7 +19,7 @@ module pbepack_quadratures
 contains
 
    pure function quadgrid1(fnc, grid, average) result(res)
-   !! Quadrature of \( f(x) \) over user-supplied grid, using Simpson's rule.
+   !! Cell integral/average of \( f(x) \) over grid, using Simpson's 1/3 rule.
       procedure(fx) :: fnc
          !! function f(x) to integrate/average over grid cells
       type(grid1), intent(in) :: grid
@@ -43,7 +43,7 @@ contains
             fcenter(i) = fnc(grid%center(i))
          end do
 
-         ! Cell-average using Simpson's rule
+         ! Cell-average using Simpson's 1/3 rule
          res = (4*fcenter + fedges(0:nc - 1) + fedges(1:nc))/6
 
          ! Convert cell-average to cell-integral
