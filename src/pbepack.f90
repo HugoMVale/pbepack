@@ -1,8 +1,8 @@
 module pbepack
-   use pbepack_pbe1, only: pbe1
+   use pbepack_pbe1, only: pbe
    implicit none
    private
 
-   public :: pbe1
+   public :: pbe
 
 end module pbepack
