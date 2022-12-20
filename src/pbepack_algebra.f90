@@ -27,7 +27,7 @@ module pbepack_algebra
 contains
 
    pure type(spmatrix) function spmatrix_init(n) result(res)
-   !! Initialize 'spmatrix' object.
+   !! Initialize `spmatrix` object.
       integer, intent(in) :: n
          !! number of rows or columns
 
