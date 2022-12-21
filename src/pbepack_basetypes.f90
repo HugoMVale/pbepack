@@ -19,8 +19,6 @@ module pbepack_basetypes
          !! error code
       logical :: inited = .false.
          !! initialization flag
-      logical :: verbose = .false.
-         !! verbose flag
    contains
       procedure, pass(self) :: set_name
       procedure, pass(self) :: error_msg
