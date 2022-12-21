@@ -1,5 +1,5 @@
 module pbepack_agg1
-!! Derived types and procedures to compute the aggregation term for 1D PBEs.
+!! Derived types and procedures to compute the *aggregation* term for 1D PBEs.
    use pbepack_kinds
    use pbepack_math, only: delta_kronecker
    use pbepack_algebra, only: spmatrix
@@ -54,11 +54,11 @@ contains
       type(grid1), intent(in) :: grid
          !! `grid1` object
       procedure(afnc_t) :: afnc
-         !! aggregation frequency function, \( a(x,x',y) \)
+         !! aggregation frequency function, \( a(x,x',\textbf{y}) \)
       integer, intent(in), optional :: moment
          !! moment of \( x \) to be preserved upon aggregation (default=1)
       logical, intent(in), optional :: update_a
-         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step (default=true)
+         !! if `true`, \( a(x,x',\textbf{y}) \) is reevaluated at each step (default=true)
       character(*), intent(in), optional :: name
          !! name (default="agg-term")
 
@@ -85,11 +85,11 @@ contains
       class(aggterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! cell-average number density, \( \bar{u} \)
+         !! cell-average number density, \( \bar{u_i} \)
       real(rk), intent(in) :: y(:)
-         !! environment vector, \(y\)
+         !! environment vector, \(y_j\)
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change (birth-death), \( d\bar{u}/dt \)
+         !! net rate of change (birth-death), \( d\bar{u_i}/dt \)
       real(rk), intent(out), optional :: udot_birth(:)
          !! rate of birth
       real(rk), intent(out), optional :: udot_death(:)

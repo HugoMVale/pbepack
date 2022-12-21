@@ -1,5 +1,5 @@
 module pbepack_break1
-!! Derived types and procedures to compute the breakage term for 1D PBEs.
+!! Derived types and procedures to compute the *breakage* term for 1D PBEs.
    use pbepack_kinds
    use pbepack_basetypes, only: particleterm
    use hrweno_grids, only: grid1
@@ -67,15 +67,15 @@ contains
       type(grid1), intent(in) :: grid
          !! `grid1` object
       procedure(bfnc_t) :: bfnc
-         !! breakage frequency function, \( b(x,y) \)
+         !! breakage frequency function, \( b(x,\textbf{y}) \)
       procedure(dfnc_t) :: dfnc
-         !! daughter distribution function, \( d(x,x',y) \)
+         !! daughter distribution function, \( d(x,x',\textbf{y}) \)
       integer, intent(in), optional :: moment
          !! moment of \( x \) to be preserved upon breakage (default=1)
       logical, intent(in), optional :: update_b
-         !! flag to select if \( b(x,y) \) is to be reevaluated at each step (default=true)
+         !! if `true`, \( b(x,\textbf{y}) \) is reevaluated at each step (default=true)
       logical, intent(in), optional :: update_d
-         !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step (default=true)
+         !! if `true`, \( d(x,x',\textbf{y}) \) is reevaluated at each step (default=true)
       character(*), intent(in), optional :: name
          !! name (default="break-term")
 
@@ -106,11 +106,11 @@ contains
       class(breakterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! cell-average number density, \( \bar{u} \)
+         !! cell-average number density, \( \bar{u_i} \)
       real(rk), intent(in) :: y(:)
-         !! environment vector,  \(y\)
+         !! environment vector,  \(y_j\)
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change (birth-death), \( d\bar{u}/dt \)
+         !! net rate of change (birth-death), \( d\bar{u_i}/dt \)
       real(rk), intent(out), optional :: udot_birth(:)
          !! rate of birth
       real(rk), intent(out), optional :: udot_death(:)

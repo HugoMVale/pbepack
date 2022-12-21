@@ -32,11 +32,11 @@ module pbepack_pbe1
       real(rk), allocatable :: t(:)
          !! vector(npoints) of time points
       real(rk), allocatable :: u(:, :)
-         !! array(ncells,npoints) of \( \bar{u}_i(t_j) \)
+         !! array(ncells,npoints) of \( \bar{u}_i(t_k) \)
       real(rk), allocatable :: y(:, :)
-         !! array(nenvs,npoints) of \( {y}_i(t_j) \)
+         !! array(nenvs,npoints) of \( {y}_j(t_k) \)
       integer :: nfev = 0
-         !! number of evaluations of \( d\bar{u}/dt \)
+         !! number of evaluations of \( d\bar{\textbf{u}}/dt \)
       logical :: success = .false.
          !! flag indicating if integration was successfull
    end type pbesol
@@ -77,21 +77,21 @@ contains
       type(grid1), intent(in), target :: grid
          !! `grid1` object
       procedure(gfnc_t), optional :: gfnc
-         !! growth rate  function, \( g(x,y) \)
+         !! growth rate  function, \( g(x,\textbf{y}) \)
       procedure(afnc_t), optional :: afnc
-         !! aggregation frequency function, \( a(x,x',y) \)
+         !! aggregation frequency function, \( a(x,x',\textbf{y}) \)
       procedure(bfnc_t), optional :: bfnc
-         !! breakage frequency function, \( b(x,y) \)
+         !! breakage frequency function, \( b(x,\textbf{y}) \)
       procedure(dfnc_t), optional :: dfnc
-         !! daughter distribution function, \( d(x,x',y) \)
+         !! daughter distribution function, \( d(x,x',\textbf{y}) \)
       integer, intent(in), optional :: moment
          !! moment of \( x \) to be preserved upon aggregation/breakage (default=1)
       logical, intent(in), optional :: update_a
-         !! flag to select if \( a(x,x',y) \) is to be reevaluated at each step (default=true)
+         !! if `true`, \( a(x,x',\textbf{y}) \) is reevaluated at each step (default=true)
       logical, intent(in), optional :: update_b
-         !! flag to select if \( b(x,y) \) is to be reevaluated at each step (default=true)
+         !! if `true`, \( b(x,\textbf{y}) \) is reevaluated at each step (default=true)
       logical, intent(in), optional :: update_d
-         !! flag to select if \( d(x,x',y) \) is to be reevaluated at each step (default=true)
+         !! if `true`, \( d(x,x',\textbf{y}) \) is reevaluated at each step (default=true)
       character(*), intent(in), optional :: name
          !! name (default="pbe")
       integer :: moment_
@@ -130,11 +130,11 @@ contains
    pure type(pbesol) function pbesol_init(npoints, ncells, nenvs) result(res)
    !! Initialize `pbesol` object.
       integer, intent(in) :: npoints
-         !! number of time points, size(times)
+         !! number of time points, i.e. `size(times)`
       integer, intent(in) :: ncells
-         !! number of grid cells, size(u)
+         !! number of grid cells, i.e. `size(u)`
       integer, intent(in) :: nenvs
-         !! number of environment variables, size(y)
+         !! number of environment variables, i.e. `size(y)`
 
       allocate (res%t(npoints), res%u(ncells, npoints), res%y(nenvs, npoints))
       res%inited = .true.
@@ -146,11 +146,11 @@ contains
       class(pbe), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! cell-average number density, \( \bar{u} \)
+         !! cell-average number density, \( \bar{u_i} \)
       real(rk), intent(in) :: y(:)
-         !! environment vector, \( y \)
+         !! environment vector, \( y_j \)
       real(rk), intent(out), optional :: udot(:)
-         !! total rate of change, \( d\bar{u}/dt \)
+         !! total rate of change, \( d\bar{u_i}/dt \)
 
       call self%check_inited()
 
@@ -189,11 +189,11 @@ contains
       procedure(u0fnc_t) :: u0fnc
          !! initial condition of number density, \( u(x,t=0) \)
       real(rk), intent(in), optional :: y0(:)
-         !! initial condition of environment vector, \( y(t=0) \)
+         !! initial condition of environment vector, \( y_j(t=0) \)
       procedure(ydotfnc_t), optional :: ydotfnc
-         !! derivative of environment vector, \( dy/dt \)
+         !! derivative of environment vector, \( dy_j/dt \)
       real(rk), intent(in), optional :: atol
-         !! absolute tolerance (default=1e-6)
+         !! absolute tolerance (default=1e-15)
       real(rk), intent(in), optional :: rtol
          !! relative tolerance (default=1e-5)
       logical, intent(in), optional :: verbose
@@ -244,7 +244,7 @@ contains
       do i = 1, npoints
          tout = times(i)
          call ode%integrate(z, t, tout, &
-                            optval(rtol, 1e-5_rk), [optval(atol, 1e-6_rk)], &
+                            optval(rtol, 1e-5_rk), [optval(atol, 1e-15_rk)], &
                             itask, istate)
          if (istate < 0) then
             call self%error_msg("Integration failed: "//ode%error_message)

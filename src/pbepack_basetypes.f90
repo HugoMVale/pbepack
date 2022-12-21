@@ -30,7 +30,7 @@ module pbepack_basetypes
       type(grid1), pointer :: grid => null()
          !! pointer to grid object
       real(rk), allocatable :: udot(:)
-         !! net rate of change, \( d\bar{u}/dt \)
+         !! net rate of change, \( d\bar{u_i}/dt \)
    contains
       procedure, pass(self) :: set_grid
       procedure, pass(self) :: pbeterm_allocations

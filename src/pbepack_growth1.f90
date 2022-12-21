@@ -1,5 +1,5 @@
 module pbepack_growth1
-!! Derived types and procedures to compute the growth term for 1D PBEs.
+!! Derived types and procedures to compute the *growth* term for 1D PBEs.
    use pbepack_kinds
    use pbepack_basetypes, only: pbeterm
    use hrweno_grids, only: grid1
@@ -49,7 +49,7 @@ contains
       type(grid1), intent(in) :: grid
          !! `grid1` object
       procedure(gfnc_t) :: gfnc
-         !! growth rate function, \( g(x,y) \)
+         !! growth rate function, \( g(x,\textbf{y}) \)
       integer, intent(in) :: k
          !! \( 2(k-1) \) order of the WENO reconstruction (default=3)
       character(*), intent(in), optional :: name
@@ -79,11 +79,11 @@ contains
       class(growthterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! cell-average number density, \( \bar{u} \)
+         !! cell-average number density, \( \bar{u_i} \)
       real(rk), intent(in) :: y(:)
-         !! environment vector, \( y \)
+         !! environment vector, \( y_j \)
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change, \( d\bar{u}/dt \)
+         !! net rate of change, \( d\bar{u_i}/dt \)
 
       integer :: i
 
