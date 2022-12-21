@@ -71,18 +71,18 @@ module pbepack_pbe1
 
 contains
 
-   type(pbe) function pbe_init(grid, gfnc, afnc, bfnc, dfnc, moment, update_a, &
-                               update_b, update_d, name) result(self)
+   type(pbe) function pbe_init(grid, g, a, b, d, moment, update_a, update_b, update_d, &
+                               name) result(self)
    !! Initialize `pbe` object.
       type(grid1), intent(in), target :: grid
          !! `grid1` object
-      procedure(gfnc_t), optional :: gfnc
+      procedure(gfnc_t), optional :: g
          !! growth rate  function, \( g(x,\textbf{y}) \)
-      procedure(afnc_t), optional :: afnc
+      procedure(afnc_t), optional :: a
          !! aggregation frequency function, \( a(x,x',\textbf{y}) \)
-      procedure(bfnc_t), optional :: bfnc
+      procedure(bfnc_t), optional :: b
          !! breakage frequency function, \( b(x,\textbf{y}) \)
-      procedure(dfnc_t), optional :: dfnc
+      procedure(dfnc_t), optional :: d
          !! daughter distribution function, \( d(x,x',\textbf{y}) \)
       integer, intent(in), optional :: moment
          !! moment of \( x \) to be preserved upon aggregation/breakage (default=1)
@@ -101,21 +101,21 @@ contains
       call self%set_grid(grid)
 
       ! Init growth term
-      if (present(gfnc)) then
-         self%growth = growthterm(grid, gfnc, k=3, name=name//"-growth")
+      if (present(g)) then
+         self%growth = growthterm(grid, g, k=3, name=name//"-growth")
       end if
 
       ! Init aggregation term
       moment_ = optval(moment, 1)
-      if (present(afnc)) then
-         self%agg = aggterm(grid, afnc, moment_, optval(update_a, .true.), name=name//"-agg")
+      if (present(a)) then
+         self%agg = aggterm(grid, a, moment_, optval(update_a, .true.), name=name//"-agg")
       end if
 
       ! Init breakage term
-      if (present(bfnc) .neqv. present(dfnc)) then
-         call self%error_msg("Arguments 'bfnc' and 'dfnc' must both be present or absent.")
-      else if (present(bfnc) .and. present(dfnc)) then
-         self%break = breakterm(grid, bfnc, dfnc, moment_, optval(update_b, .true.), &
+      if (present(b) .neqv. present(d)) then
+         call self%error_msg("Arguments 'b' and 'd' must both be present or absent.")
+      else if (present(b) .and. present(d)) then
+         self%break = breakterm(grid, b, d, moment_, optval(update_b, .true.), &
                                 optval(update_d, .true.), name=name//"-break")
       end if
 

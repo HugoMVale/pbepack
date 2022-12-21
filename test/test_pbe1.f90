@@ -45,7 +45,7 @@ contains
 
       ! Init pbe object
       moment = 1
-      equation = pbe(gx, gfnc=glinear, afnc=aconst, bfnc=bconst, dfnc=dfuni, moment=moment, &
+      equation = pbe(gx, g=glinear, a=aconst, b=bconst, d=dfuni, moment=moment, &
                      name="test_pbeterms")
 
       ! Evaluate rate of change at a given point
@@ -81,7 +81,7 @@ contains
       call gx%linear(1._rk, 2e3_rk, nc)
 
       ! Init pbe object
-      equation = pbe(gx, gfnc=glinear, afnc=aconst, bfnc=bconst, dfnc=dfuni, moment=1, &
+      equation = pbe(gx, g=glinear, a=aconst, b=bconst, d=dfuni, moment=1, &
                      name="test_pbeintegration")
 
       ! Integrate
