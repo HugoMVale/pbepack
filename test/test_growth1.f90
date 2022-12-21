@@ -4,6 +4,7 @@ module test_growth1
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
    use pbepack_pbe1, only: pbe
+   use pbepack_quadratures, only: evalmoment
    use hrweno_grids, only: grid1
    use utils_tests, only: gconst
    use stdlib_strings, only: to_string
@@ -33,23 +34,23 @@ contains
 
       integer, parameter :: ncells = 10*3
       type(grid1) :: gx
-      type(pbe) :: eq
+      type(pbe) :: mypbe
       real(rk), dimension(ncells) :: u, udot
-      real(rk) :: delta_moment(0:1)
+      real(rk) :: delta_moment(0:1), unorm
       integer :: i
 
       call gx%linear(1._rk, 6._rk, ncells)
 
-      eq = pbe(grid=gx, gfnc=gconst, name="test_moment_conservation")
+      mypbe = pbe(grid=gx, g=gconst, name="test_moment_conservation")
       u = ZERO; u(ncells/3 + 1:2*ncells/3) = ONE
-      call eq%growth%eval(u, y=VOIDREAL, udot=udot)
+      call mypbe%growth%eval(u, y=VOIDREAL, udot=udot)
 
-      do i = lbound(delta_moment, 1), ubound(delta_moment, 1)
-         delta_moment(i) = sum(udot*gx%width*gx%center**i)/sum(u*gx%width)
-      end do
+      unorm = evalmoment(u, gx, 0)
+      delta_moment(0) = evalmoment(udot, gx, 0)
+      delta_moment(1) = evalmoment(udot, gx, 1)
+      delta_moment = delta_moment/unorm
 
-      call check(error, delta_moment(0), ZERO)
-      call check(error, delta_moment(1), ONE, rel=.true., thr=1e-14_rk)
+      call check(error, delta_moment, [ZERO, ONE])
 
       if (allocated(error) .or. verbose) then
          print *
