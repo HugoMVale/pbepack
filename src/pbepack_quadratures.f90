@@ -5,7 +5,7 @@ module pbepack_quadratures
    implicit none
    private
 
-   public :: quadgrid1
+   public :: quadgrid1, evalmoment
 
    abstract interface
       pure real(rk) function fx(x)
@@ -19,9 +19,20 @@ module pbepack_quadratures
 contains
 
    pure function quadgrid1(fnc, grid, average) result(res)
-   !! Cell integral/average of \( f(x) \) over grid, using Simpson's 1/3 rule.
+   !! Cell-integral or cell-average of \( f(x) \) over grid, using Simpson's 1/3 rule.
+   !! ```
+   !!   f(x) ^
+   !!        |                * * * *
+   !!        |          * * *++++++++++ *
+   !!        |        *                  *
+   !!        |     ++*++++++               *
+   !!        |     *                    ++++*+++++
+   !!        |                                 * *
+   !!       -|----|----.----|-----.----|----.-----|---->
+   !!               x_{i-i}      x_i      x_{i+1}
+   !! ```
       procedure(fx) :: fnc
-         !! function f(x) to integrate/average over grid cells
+         !! function \( f(x) \) to integrate/average over grid cells
       type(grid1), intent(in) :: grid
          !! `grid1` object
       logical, intent(in), optional :: average
@@ -54,5 +65,34 @@ contains
       end associate
 
    end function quadgrid1
+
+   pure real(rk) function evalmoment(u, grid, order, normalize) result(res)
+   !! \(m\)-th order moment of \( u(x,t) \):
+   !! $$
+   !! \mu_m(t) = \frac{\sum_i \bar{u_i}(t) \Delta x_i x_i^m}{\left[ \sum_i \bar{u_i}(t) \Delta x_i \right]}
+   !! $$
+      real(rk), intent(in) :: u(:)
+         !! cell-average number density, \( \bar{u_i} \)
+      type(grid1), intent(in) :: grid
+         !! `grid1` object
+      integer, intent(in) :: order
+         !! order of the moment
+      logical, intent(in), optional :: normalize
+         !! if `true`, the result will be normalized by the 0-th moment
+
+      ! Check `order`
+      if (order < 0) then
+         error stop "Invalid 'order'. Valid range: order >=0."
+      end if
+
+      ! Compute moment
+      res = sum(u*grid%width*grid%center**order)
+
+      ! Normalize if required
+      if (optval(normalize, .false.)) then
+         res = res/sum(u*grid%width)
+      end if
+
+   end function evalmoment
 
 end module pbepack_quadratures
