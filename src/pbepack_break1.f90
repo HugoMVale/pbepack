@@ -61,14 +61,14 @@ module pbepack_break1
 
 contains
 
-   type(breakterm) function breakterm_init(grid, bfnc, dfnc, moment, update_b, update_d, &
+   type(breakterm) function breakterm_init(grid, b, d, moment, update_b, update_d, &
                                            name) result(self)
    !! Initialize `breakterm` object.
       type(grid1), intent(in) :: grid
          !! `grid1` object
-      procedure(bfnc_t) :: bfnc
+      procedure(bfnc_t) :: b
          !! breakage frequency function, \( b(x,\textbf{y}) \)
-      procedure(dfnc_t) :: dfnc
+      procedure(dfnc_t) :: d
          !! daughter distribution function, \( d(x,x',\textbf{y}) \)
       integer, intent(in), optional :: moment
          !! moment of \( x \) to be preserved upon breakage (default=1)
@@ -82,8 +82,8 @@ contains
       ! Set parameters
       call self%set_name(name, "break-term")
       call self%set_grid(grid)
-      self%bfnc => bfnc
-      self%dfnc => dfnc
+      self%bfnc => b
+      self%dfnc => d
       if (present(moment)) call self%set_moment(moment)
       if (present(update_b)) self%update_b = update_b
       if (present(update_d)) self%update_d = update_d
