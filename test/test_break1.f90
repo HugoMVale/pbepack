@@ -52,7 +52,7 @@ contains
          ! Test different moments
          do moment = 1, 3
 
-            mypbe = pbe(grid=gx, bfnc=bconst, dfnc=dfuni, moment=moment, update_b=.false., &
+            mypbe = pbe(grid=gx, b=bconst, d=dfuni, moment=moment, update_b=.false., &
                         name="test_moment_conservation")
             u = ZERO; u(ncells) = ONE
             call mypbe%break%eval(u, y=VOIDREAL, udot_birth=udot_birth, udot_death=udot_death)
