@@ -31,19 +31,18 @@ contains
    subroutine test_moment_conservation(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 10*3
+      integer, parameter :: ncells = 10*3
       type(grid1) :: gx
       type(pbe) :: eq
-      real(rk), dimension(nc) :: u, udot
-      real(rk) :: y(0:0), delta_moment(0:1)
+      real(rk), dimension(ncells) :: u, udot
+      real(rk) :: delta_moment(0:1)
       integer :: i
 
-      call gx%linear(1._rk, 6._rk, nc)
+      call gx%linear(1._rk, 6._rk, ncells)
 
       eq = pbe(grid=gx, gfnc=gconst, name="test_moment_conservation")
-      u = ZERO; u(nc/3 + 1:2*nc/3) = ONE
-      y = ZERO
-      call eq%growth%eval(u, y, udot=udot)
+      u = ZERO; u(ncells/3 + 1:2*ncells/3) = ONE
+      call eq%growth%eval(u, y=VOIDREAL, udot=udot)
 
       do i = lbound(delta_moment, 1), ubound(delta_moment, 1)
          delta_moment(i) = sum(udot*gx%width*gx%center**i)/sum(u*gx%width)
