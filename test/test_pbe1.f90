@@ -74,7 +74,7 @@ contains
       type(grid1) :: gx
       type(pbe) :: equation
       type(pbesol) :: solution
-      real(rk) :: u(nc), y(0:0)
+      real(rk) :: u(nc), y0(1:-2) = ONE
       real(rk), allocatable :: times(:)
 
       ! Init linear grid
@@ -86,7 +86,7 @@ contains
 
       ! Integrate
       times = linspace(ZERO, 1e0_rk, 10)
-      solution = equation%integrate(u0, times, rtol=1e-5_rk, atol=1e-10_rk, verbose=.true.)
+      solution = equation%integrate(times, u0, y0, rtol=1e-5_rk, atol=1e-10_rk, verbose=.true.)
       !call check(error, result(:, 0), sum(result(:, 1:3), dim=2))
 
    contains

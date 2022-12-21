@@ -17,35 +17,48 @@ module pbepack_pbe1
    type, extends(pbeterm) :: pbe
    !! 1D PBE class.
       type(aggterm) :: agg
-        !! aggregation object
+         !! aggregation object
       type(breakterm) :: break
          !! breakage object
       type(growthterm) :: growth
          !! growth object
    contains
-      procedure, pass(self) :: eval => pbe_eval
-      procedure, pass(self) :: integrate => pbe_integrate
+      procedure, pass(self), public :: eval => pbe_eval
+      procedure, pass(self), public :: integrate => pbe_integrate
    end type pbe
 
    type, extends(base) :: pbesol
    !! 1D PBE solution class.
       real(rk), allocatable :: t(:)
-        !! vector(npoints) of time points
+         !! vector(npoints) of time points
       real(rk), allocatable :: u(:, :)
-        !! array(ncells,npoints) of /(\bar{u}_i(t_j)/)
+         !! array(ncells,npoints) of \( \bar{u}_i(t_j) \)
+      real(rk), allocatable :: y(:, :)
+         !! array(nenvs,npoints) of \( {y}_i(t_j) \)
       integer :: nfev = 0
-         !! number of evaluations of /(d\bar{u}/dt/)
+         !! number of evaluations of \( d\bar{u}/dt \)
       logical :: success = .false.
          !! flag indicating if integration was successfull
    end type pbesol
 
    abstract interface
-      pure real(rk) function ic_t(x)
-      !! Interface initial condition of 1D PBE.
+      pure real(rk) function u0fnc_t(x)
+      !! Initial condition of 1D PBE.
          import rk
          real(rk), intent(in) :: x
             !! internal coordinate
       end function
+
+      pure function ydotfnc_t(t, y)
+      !! Derivative environment vector.
+         import rk
+         real(rk), intent(in) :: t
+            !! time
+         real(rk), intent(in) :: y(:)
+            !! environment vector
+         real(rk) :: ydotfnc_t(size(y))
+      end function
+
    end interface
 
    interface pbe
@@ -60,7 +73,7 @@ contains
 
    type(pbe) function pbe_init(grid, gfnc, afnc, bfnc, dfnc, moment, update_a, &
                                update_b, update_d, name) result(self)
-   !! Initialize `pbe1` object.
+   !! Initialize `pbe` object.
       type(grid1), intent(in), target :: grid
          !! `grid1` object
       procedure(gfnc_t), optional :: gfnc
@@ -114,6 +127,20 @@ contains
 
    end function pbe_init
 
+   pure type(pbesol) function pbesol_init(npoints, ncells, nenvs) result(res)
+   !! Initialize `pbesol` object.
+      integer, intent(in) :: npoints
+         !! number of time points, size(times)
+      integer, intent(in) :: ncells
+         !! number of grid cells, size(u)
+      integer, intent(in) :: nenvs
+         !! number of environment variables, size(y)
+
+      allocate (res%t(npoints), res%u(ncells, npoints), res%y(nenvs, npoints))
+      res%inited = .true.
+
+   end function
+
    pure subroutine pbe_eval(self, u, y, udot)
    !! Evaluate total rate of change at a given instant.
       class(pbe), intent(inout) :: self
@@ -123,7 +150,7 @@ contains
       real(rk), intent(in) :: y(:)
          !! environment vector, \( y \)
       real(rk), intent(out), optional :: udot(:)
-         !!  total rate of change, \( d\bar{u}/dt \)
+         !! total rate of change, \( d\bar{u}/dt \)
 
       call self%check_inited()
 
@@ -151,15 +178,20 @@ contains
 
    end subroutine pbe_eval
 
-   type(pbesol) function pbe_integrate(self, ic, times, atol, rtol, verbose) result(res)
+   type(pbesol) function pbe_integrate(self, times, u0fnc, y0, ydotfnc, atol, rtol, &
+                                       verbose) result(res)
    !! Integrate PBE using LSODA as ODE solver.
       class(pbe), intent(inout) :: self
          !! object
-      procedure(ic_t) :: ic
-         !! initial condition, \( u_0(x) \)
       real(rk), intent(in) :: times(:)
          !! time sequence for which output is wanted; the first value of `times` must be the
          !! initial time
+      procedure(u0fnc_t) :: u0fnc
+         !! initial condition of number density, \( u(x,t=0) \)
+      real(rk), intent(in), optional :: y0(:)
+         !! initial condition of environment vector, \( y(t=0) \)
+      procedure(ydotfnc_t), optional :: ydotfnc
+         !! derivative of environment vector, \( dy/dt \)
       real(rk), intent(in), optional :: atol
          !! absolute tolerance (default=1e-6)
       real(rk), intent(in), optional :: rtol
@@ -168,26 +200,42 @@ contains
          !! verbose flag (default=false)
 
       type(lsoda_class) :: ode
-      real(rk) :: u(self%grid%ncells), t, tout
-      integer :: i, npoints, istate, itask
+      real(rk), allocatable :: z(:)
+      real(rk) :: t, tout
+      integer :: i, ncells, nenvs, npoints, istate, itask
 
-      ! Check inputs
+      ! Check `times`
       npoints = size(times)
       if (npoints < 2) then
          call self%error_msg("Invalid 'times' dimension. Valid range: size(times) >= 2.")
       end if
 
-      ! Evaluate initial condition
-      u = quadgrid1(ic, self%grid, average=.true.)
+      ! Check `y0` and `ydotfnc`
+      if (present(y0)) then
+         nenvs = size(y0)
+      else
+         nenvs = 0
+      end if
+      if (present(ydotfnc) .and. nenvs == 0) then
+         call self%error_msg("Dimension mismatch between 'y0' and 'ydotfnc'.")
+      end if
+
+      ! Allocate joint state vector
+      ncells = self%grid%ncells
+      allocate (z(ncells + nenvs))
 
       ! Init ode solver object
-      call ode%initialize(rhs, self%grid%ncells, istate=istate)
+      call ode%initialize(zdotfnc, size(z), istate=istate)
       if (istate < 0) then
          call self%error_msg("Initialization of ODE solver failed: "//ode%error_message)
       end if
 
       ! Init pbesolution object
-      res = pbesol(self%grid%ncells, npoints)
+      res = pbesol(npoints, ncells, nenvs)
+
+      ! Evaluate and assign initial condition
+      z(:ncells) = quadgrid1(u0fnc, self%grid, average=.true.)
+      if (nenvs > 0) z(ncells + 1:) = y0
 
       ! Integrate
       itask = 1
@@ -195,40 +243,42 @@ contains
       t = times(1)
       do i = 1, npoints
          tout = times(i)
-         call ode%integrate(u, t, tout, optval(rtol, 1e-5_rk), [optval(atol, 1e-6_rk)], &
+         call ode%integrate(z, t, tout, &
+                            optval(rtol, 1e-5_rk), [optval(atol, 1e-6_rk)], &
                             itask, istate)
          if (istate < 0) then
             call self%error_msg("Integration failed: "//ode%error_message)
          end if
+         ! Store integration results in pbesol object
          res%t(i) = t
-         res%u(:, i) = u
+         res%u(:, i) = z(:ncells)
+         if (nenvs > 0) res%y(:, i) = z(ncells + 1:)
       end do
+      call ode%info(nfe=res%nfev)
       res%success = .true.
 
    contains
 
-      subroutine rhs(this, neq, t_, v, vdot, ierr)
+      subroutine zdotfnc(this, neq, t_, z_, zdot_, ierr)
          class(lsoda_class), intent(inout) :: this
          integer, intent(in) :: neq
-         real(dp), intent(in) :: t_, v(neq)
-         real(dp), intent(out) :: vdot(neq)
+         real(dp), intent(in) :: t_, z_(neq)
+         real(dp), intent(out) :: zdot_(neq)
          integer, intent(out) :: ierr
-         call self%eval(v, [ZERO], vdot)
+
+         if (nenvs == 0) then
+            call self%eval(z_, VOIDREAL, zdot_)
+         else
+            call self%eval(z_(:ncells), z_(ncells + 1:), zdot_(:ncells))
+            if (present(ydotfnc)) then
+               zdot_(ncells + 1:) = ydotfnc(t_, z_(ncells + 1:))
+            end if
+         end if
+
          ierr = 0
+
       end subroutine
 
    end function pbe_integrate
-
-   pure type(pbesol) function pbesol_init(ncells, npoints) result(res)
-   !! Initialize `pbesolution` object.
-      integer, intent(in) :: ncells
-         !! number of grid cells
-      integer, intent(in) :: npoints
-         !! number of time points
-
-      allocate (res%t(npoints), res%u(ncells, npoints))
-      res%inited = .true.
-
-   end function
 
 end module pbepack_pbe1
