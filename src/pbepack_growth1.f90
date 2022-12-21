@@ -44,11 +44,11 @@ module pbepack_growth1
 
 contains
 
-   type(growthterm) function growthterm_init(grid, gfnc, k, name) result(self)
+   type(growthterm) function growthterm_init(grid, g, k, name) result(self)
    !! Initialize `growthterm` object.
       type(grid1), intent(in) :: grid
          !! `grid1` object
-      procedure(gfnc_t) :: gfnc
+      procedure(gfnc_t) :: g
          !! growth rate function, \( g(x,\textbf{y}) \)
       integer, intent(in) :: k
          !! \( 2(k-1) \) order of the WENO reconstruction (default=3)
@@ -58,7 +58,7 @@ contains
       ! Set properties
       call self%set_name(name, "growth-term")
       call self%set_grid(grid)
-      self%gfnc => gfnc
+      self%gfnc => g
 
       ! Allocate stuff
       call self%pbeterm_allocations()
