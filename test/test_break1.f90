@@ -32,29 +32,28 @@ contains
    subroutine test_moment_conservation(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 200
+      integer, parameter :: ncells = 200
       type(grid1) :: gx
       type(pbe) :: eq
-      real(rk), dimension(nc) :: u, birth, death
-      real(rk) :: y(0:0), moment_birth_0, moment_birth_m, moment_death_0, moment_death_m
+      real(rk), dimension(ncells) :: u, birth, death
+      real(rk) :: moment_birth_0, moment_birth_m, moment_death_0, moment_death_m
       integer :: moment, scale
 
       ! Test linear and log grids
       do scale = 1, 2
          select case (scale)
          case (1)
-            call gx%linear(0._rk, 3e2_rk, nc)
+            call gx%linear(0._rk, 3e2_rk, ncells)
          case (2)
-            call gx%geometric(0._rk, 2e3_rk, 1.01_rk, nc)
+            call gx%geometric(0._rk, 2e3_rk, 1.01_rk, ncells)
          end select
 
          ! Test different moments
          do moment = 1, 3
             eq = pbe(grid=gx, bfnc=bconst, dfnc=dfuni, moment=moment, update_b=.false., &
                      name="test_moment_conservation")
-            u = ZERO; u(nc) = ONE
-            y = ZERO
-            call eq%break%eval(u, y, udot_birth=birth, udot_death=death)
+            u = ZERO; u(ncells) = ONE
+            call eq%break%eval(u, y=VOIDREAL, udot_birth=birth, udot_death=death)
 
             moment_birth_0 = sum(birth*gx%width)
             moment_death_0 = sum(death*gx%width)
