@@ -4,6 +4,7 @@ module test_agg1
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
    use pbepack_pbe1, only: pbe
+   use pbepack_quadratures, only: evalmoment
    use hrweno_grids, only: grid1
    use utils_tests
    use stdlib_strings, only: to_string
@@ -32,8 +33,8 @@ contains
 
       integer, parameter :: ncells = 200
       type(grid1) :: gx
-      type(pbe) :: eq
-      real(rk), dimension(ncells) :: u, birth, death
+      type(pbe) :: mypbe
+      real(rk), dimension(ncells) :: u, udot_birth, udot_death
       real(rk) :: moment_birth_0, moment_birth_m, moment_death_0, moment_death_m
       integer :: moment, scale
 
@@ -48,15 +49,16 @@ contains
 
          ! Test different moments
          do moment = 1, 3
-            eq = pbe(grid=gx, afnc=aprod, moment=moment, update_a=.false., &
-                     name="test_moment_conservation")
-            u = ZERO; u(1:ncells/2 - 1) = ONE
-            call eq%agg%eval(u, y=VOIDREAL, udot_birth=birth, udot_death=death)
 
-            moment_birth_0 = sum(birth*gx%width)
-            moment_death_0 = sum(death*gx%width)
-            moment_birth_m = sum(birth*gx%width*gx%center**moment)
-            moment_death_m = sum(death*gx%width*gx%center**moment)
+            mypbe = pbe(grid=gx, afnc=aprod, moment=moment, update_a=.false., &
+                        name="test_moment_conservation")
+            u = ZERO; u(1:ncells/2 - 1) = ONE
+            call mypbe%agg%eval(u, y=VOIDREAL, udot_birth=udot_birth, udot_death=udot_death)
+
+            moment_birth_0 = evalmoment(udot_birth, gx, 0)
+            moment_death_0 = evalmoment(udot_death, gx, 0)
+            moment_birth_m = evalmoment(udot_birth, gx, moment)
+            moment_death_m = evalmoment(udot_death, gx, moment)
 
             call check(error, moment_birth_0, moment_death_0/2, rel=.true., thr=1e-14_rk)
             call check(error, moment_birth_m, moment_death_m, rel=.true., thr=1e-14_rk)
@@ -68,6 +70,7 @@ contains
                write (stderr, '(a18,(es24.14e3))') "birth/death(0)   =", moment_birth_0/moment_death_0
                write (stderr, '(a18,(es24.14e3))') "birth/death("//to_string(moment)//")   =", moment_birth_m/moment_death_m
             end if
+
             if (allocated(error)) return
 
          end do
