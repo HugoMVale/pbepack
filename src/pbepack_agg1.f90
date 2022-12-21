@@ -49,11 +49,11 @@ module pbepack_agg1
 
 contains
 
-   type(aggterm) function aggterm_init(grid, afnc, moment, update_a, name) result(self)
+   type(aggterm) function aggterm_init(grid, a, moment, update_a, name) result(self)
    !! Initialize `aggterm` object.
       type(grid1), intent(in) :: grid
          !! `grid1` object
-      procedure(afnc_t) :: afnc
+      procedure(afnc_t) :: a
          !! aggregation frequency function, \( a(x,x',\textbf{y}) \)
       integer, intent(in), optional :: moment
          !! moment of \( x \) to be preserved upon aggregation (default=1)
@@ -65,7 +65,7 @@ contains
       ! Set parameters
       call self%set_name(name, "agg-term")
       call self%set_grid(grid)
-      self%afnc => afnc
+      self%afnc => a
       if (present(moment)) call self%set_moment(moment)
       if (present(update_a)) self%update_a = update_a
 
