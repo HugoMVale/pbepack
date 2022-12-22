@@ -3,11 +3,12 @@ module test_agg1
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
-   use pbepack_pbe1, only: pbe
+   use pbepack_pbe1, only: pbe, pbesol
    use pbepack_quadratures, only: evalmoment
    use hrweno_grids, only: grid1
    use utils_tests
    use stdlib_strings, only: to_string
+   use stdlib_math, only: linspace
    implicit none
    private
 
@@ -23,7 +24,9 @@ contains
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
-                  new_unittest("moment conservation", test_moment_conservation) &
+                  new_unittest("moment conservation", test_moment_conservation), &
+                  new_unittest("case a(x,x')=1", test_aconst), &
+                  new_unittest("case a(x,x')=x+x'", test_asum) &
                   ]
 
    end subroutine
@@ -60,8 +63,8 @@ contains
             moment_birth_m = evalmoment(udot_birth, gx, moment)
             moment_death_m = evalmoment(udot_death, gx, moment)
 
-            call check(error, moment_birth_0, moment_death_0/2, rel=.true., thr=1e-14_rk)
-            call check(error, moment_birth_m, moment_death_m, rel=.true., thr=1e-14_rk)
+            call check(error, moment_birth_0, moment_death_0/2, rel=.true., thr=10*EPS)
+            call check(error, moment_birth_m, moment_death_m, rel=.true., thr=10*EPS)
 
             if (allocated(error) .or. verbose) then
                print *
@@ -78,36 +81,99 @@ contains
 
    end subroutine test_moment_conservation
 
-   subroutine test_case1(error)
+   subroutine test_aconst(error)
       type(error_type), allocatable, intent(out) :: error
 
-      !    integer, parameter :: nc = 100
-      !    type(grid1) :: gx
-      !    type(combarray) :: aggcomb(nc)
-      !    real(rk), dimension(nc) :: n, birth, death
-      !    real(rk) :: t, y(0:0), t0, tend
-      !    integer :: i, m, scl
+      integer, parameter :: nc = 200
+      type(grid1) :: gx
+      type(pbe) :: equation
+      type(pbesol) :: solution
+      real(rk) :: u(nc), n0, x0
+      real(rk), dimension(0:1) :: moment, momoment_ref
+      real(rk), allocatable :: times(:)
+      integer :: i
 
-      ! call cpu_time(t0)
-      !    ! ! System parameters
-      !    ! n0 = 1._rk
-      !    ! x0 = 1._rk
-      !    ! a0 = 1._rk
+      ! Init linear grid
+      call gx%log(1e-3_rk, 2e2_rk, nc)
 
-      !    ! ! Grid
-      !    ! call gx%new(0._rk, 10*x0, nc, scl=1)
+      ! Init pbe object
+      equation = pbe(gx, a=aconst, name="test_aconst")
 
-      !    ! ! Initial condition
-      !    ! n = cell_average(expo1d, gx)
-      !    ! time = 0
+      ! Integrate
+      times = linspace(ZERO, ONE, 2)
+      solution = equation%integrate(times, u0)
 
-      !    ! Call solver
+      ! Compute solution moments
+      do i = 0, 1
+         moment(i) = evalmoment(solution%u(:, size(times)), gx, i)
+      end do
 
-      ! call cpu_time(tend)
-      ! print *
-      ! print '("Time = ",f8.5," seconds.")', (tend - t0)
-      ! print *
+      ! Compute reference moments
+      n0 = evalmoment(solution%u(:, 1), gx, 0)
+      x0 = evalmoment(solution%u(:, 1), gx, 1)/n0
+      momoment_ref = aconst_moments(times(size(times)), x0=x0, n0=n0)
 
-   end subroutine test_case1
+      ! Check moments
+      call check(error, moment(0), momoment_ref(0), rel=.true., thr=1e-6_rk)
+      call check(error, moment(1), momoment_ref(1), rel=.true., thr=100*EPS)
+
+      if (allocated(error) .or. verbose) then
+         do i = 0, 1
+            write (stderr, '(a18,(es24.14e3))') &
+               "num./analyt.("//to_string(i)//") =", moment(i)/momoment_ref(i)
+         end do
+      end if
+
+   end subroutine test_aconst
+
+   subroutine test_asum(error)
+      type(error_type), allocatable, intent(out) :: error
+
+      integer, parameter :: nc = 200
+      type(grid1) :: gx
+      type(pbe) :: equation
+      type(pbesol) :: solution
+      real(rk) :: u(nc), n0, x0
+      real(rk), dimension(0:1) :: moment, moment_ref
+      real(rk), allocatable :: times(:)
+      integer :: i
+
+      ! Init linear grid
+      call gx%log(1e-3_rk, 1e3_rk, nc)
+
+      ! Init pbe object
+      equation = pbe(gx, a=asum, name="test_asum")
+
+      ! Integrate
+      times = linspace(ZERO, ONE, 2)
+      solution = equation%integrate(times, u0)
+
+      ! Compute solution moments
+      do i = 0, 1
+         moment(i) = evalmoment(solution%u(:, size(times)), gx, i)
+      end do
+
+      ! Compute reference moments
+      n0 = evalmoment(solution%u(:, 1), gx, 0)
+      x0 = evalmoment(solution%u(:, 1), gx, 1)/n0
+      moment_ref = asum_moments(times(size(times)), x0=x0, n0=n0)
+
+      ! Check moments
+      call check(error, moment(0), moment_ref(0), rel=.true., thr=1e-6_rk)
+      call check(error, moment(1), moment_ref(1), rel=.true., thr=100*EPS)
+
+      if (allocated(error) .or. verbose) then
+         do i = 0, 1
+            write (stderr, '(a18,(es24.14e3))') &
+               "num./analyt.("//to_string(i)//") =", moment(i)/moment_ref(i)
+         end do
+      end if
+
+   end subroutine test_asum
+
+   pure real(rk) function u0(x) result(res)
+      real(rk), intent(in) :: x
+      res = expo1d(x, ONE, ONE)
+   end function
 
 end module test_agg1

@@ -94,31 +94,59 @@ contains
    !! 1D Exponential distribution.
       real(rk), intent(in) :: x
          !! random variable
-      real(rk), intent(in) :: x0
+      real(rk), intent(in), optional :: x0
          !! mean value
-      real(rk), intent(in) :: n0
+      real(rk), intent(in), optional :: n0
          !! initial number of particles
-      res = (n0/x0)*exp(-x/x0)
+      real(rk) :: x0_, n0_
+      x0_ = optval(x0, ONE)
+      n0_ = optval(n0, ONE)
+      res = (n0_/x0_)*exp(-x/x0_)
    end function expo1d
 
-   elemental real(rk) function solution_case1(x, x0, n0, a0, t) result(res)
-   !! Anylytical solution for IC='expo1d' and constant aggregation frequency.
-      real(rk), intent(in) :: x
-         !! random variable
-      real(rk), intent(in) :: x0
-         !! mean value
-      real(rk), intent(in) :: n0
-         !! initial number of particles
-      real(rk), intent(in) :: a0
-         !! aggregation frequency
+   pure function aconst_moments(t, x0, n0, a0) result(res)
+   !! Moment solution for IC='expo1d' and constant aggregation frequency.
       real(rk), intent(in) :: t
          !! time
+      real(rk), intent(in), optional :: x0
+         !! mean value
+      real(rk), intent(in), optional :: n0
+         !! initial number of particles
+      real(rk), intent(in), optional :: a0
+         !! aggregation frequency
+      real(rk) :: res(0:1)
 
-      real(rk) :: tau
+      real(rk) :: x0_, n0_, a0_
 
-      tau = n0*a0*t
-      res = 4*n0/(x0*(tau + 2._rk)**2)*exp(-2*(x/x0)/(tau + 2._rk))
+      x0_ = optval(x0, ONE)
+      n0_ = optval(n0, ONE)
+      a0_ = optval(a0, ONE)
+      res(0) = 2*n0_/(TWO + a0_*n0_*t)
+      res(1) = n0_*x0_
 
-   end function solution_case1
+   end function
+
+   pure function asum_moments(t, x0, n0, a1) result(res)
+   !! Moment solution for IC='expo1d' and sum aggregation frequency.
+      real(rk), intent(in) :: t
+         !! time
+      real(rk), intent(in), optional :: x0
+         !! mean value
+      real(rk), intent(in), optional :: n0
+         !! initial number of particles
+      real(rk), intent(in), optional :: a1
+         !! aggregation frequency factor
+      real(rk) :: res(0:1)
+
+      real(rk) :: x0_, n0_, a1_
+
+      x0_ = optval(x0, ONE)
+      n0_ = optval(n0, ONE)
+      a1_ = optval(a1, ONE)
+
+      res(0) = n0_*exp(-a1_*n0_*x0_*t)
+      res(1) = n0_*x0_
+
+   end function
 
 end module utils_tests
