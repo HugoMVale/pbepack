@@ -69,7 +69,7 @@ contains
    pure real(rk) function evalmoment(u, grid, order, normalize) result(res)
    !! \(m\)-th order moment of \( u(x,t) \):
    !! $$
-   !! \mu_m(t) = \frac{\sum_i \bar{u_i}(t) \Delta x_i x_i^m}{\left[ \sum_i \bar{u_i}(t) \Delta x_i \right]}
+   !! M_m(t) = \int _0^\infty x^m u(x,t)dx = {\sum_i \bar{u_i}(t) \Delta x_i x_i^m}
    !! $$
       real(rk), intent(in) :: u(:)
          !! cell-average number density, \( \bar{u_i} \)

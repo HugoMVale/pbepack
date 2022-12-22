@@ -74,6 +74,14 @@ contains
    type(pbe) function pbe_init(grid, g, a, b, d, moment, update_a, update_b, update_d, &
                                name) result(self)
    !! Initialize `pbe` object.
+   !!$$
+   !! \frac{\partial}{\partial t} u(x,t) = \\
+   !! + \frac{\partial }{\partial x}\left ( g(x,\mathbf{y})u(x,t) \right ) \\
+   !! + \int _0^{x/2} a(x-x',x',\mathbf{y})u(x-x',t)u(x',t)dx'
+   !! -u(x,t)\int _0^\infty a(x,x',\mathbf{y})u(x',t)dx' \\
+   !! + \int _x^\infty d(x,x',\mathbf{y})b(x',\mathbf{y})u(x',t)dx'
+   !! -b(x,\mathbf{y})u(x,t)
+   !!$$
       type(grid1), intent(in), target :: grid
          !! `grid1` object
       procedure(gfnc_t), optional :: g
@@ -146,11 +154,11 @@ contains
       class(pbe), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! cell-average number density, \( \bar{u_i} \)
+         !! cell-average number density, \( \bar{u_i}(t) \)
       real(rk), intent(in) :: y(:)
-         !! environment vector, \( y_j \)
+         !! environment vector, \(y_j(t)\)
       real(rk), intent(out), optional :: udot(:)
-         !! total rate of change, \( d\bar{u_i}/dt \)
+         !! total rate of change, \( \dot{u_i}(t) \)
 
       call self%check_inited()
 

@@ -64,6 +64,14 @@ contains
    type(breakterm) function breakterm_init(grid, b, d, moment, update_b, update_d, &
                                            name) result(self)
    !! Initialize `breakterm` object.
+   !!$$
+   !! \left ( \dot{u} \right )_{\mathrm{breakage}} =
+   !! \int _x^\infty d(x,x',\mathbf{y})b(x',\mathbf{y})u(x',t)dx'
+   !! -b(x,\mathbf{y})u(x,t)
+   !!$$
+   !! where \(moment\) is the moment of \(x\) to be preserved upon breakage. For example,
+   !! if \(x\) denotes particle mass or volume, then \(moment=1\), whereas if \(x\) denotes
+   !! particle radius or diameter, then \(moment=3\).
       type(grid1), intent(in) :: grid
          !! `grid1` object
       procedure(bfnc_t) :: b
@@ -98,19 +106,19 @@ contains
    end function breakterm_init
 
    pure subroutine breakterm_eval(self, u, y, udot, udot_birth, udot_death)
-   !! Evaluate the rate of breakage at a given instant, using the technique described in
-   !! Section 3.3 of Kumar and Ramkrishna (1996). The birth/source term is computed according
-   !! to a slightly different procedure: the summation is done from the perspective of the
-   !! original particles (the ones that break up), which allows for a simpler and more
-   !! efficient calculation of the particle split fractions.
+   !! Evaluate the rate of breakage at a given instant \(t\), using the technique described in
+   !! Section 3.3 of Kumar and Ramkrishna (1996). The birth term is computed using a slightly
+   !! different procedure: the summation is done from the perspective of the original particles
+   !! (the ones that break up), which allows for a simpler and more efficient calculation of
+   !! the particle split fractions.
       class(breakterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! cell-average number density, \( \bar{u_i} \)
+         !! cell-average number density, \( \bar{u_i}(t) \)
       real(rk), intent(in) :: y(:)
-         !! environment vector,  \(y_j\)
+         !! environment vector, \(y_j(t)\)
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change (birth-death), \( d\bar{u_i}/dt \)
+         !! net rate of change (birth-death), \( \dot{u_i}(t) \)
       real(rk), intent(out), optional :: udot_birth(:)
          !! rate of birth
       real(rk), intent(out), optional :: udot_death(:)

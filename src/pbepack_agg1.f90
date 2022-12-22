@@ -51,6 +51,14 @@ contains
 
    type(aggterm) function aggterm_init(grid, a, moment, update_a, name) result(self)
    !! Initialize `aggterm` object.
+   !!$$
+   !! \left ( \dot{u} \right )_{\mathrm{aggregation}} =
+   !! \int _0^{x/2} a(x-x',x',\mathbf{y})u(x-x',t)u(x',t)dx'
+   !! -u(x,t)\int _0^\infty a(x,x',\mathbf{y})u(x',t)dx'
+   !!$$
+   !! where \(moment\) is the moment of \(x\) to be preserved upon aggregation. For example,
+   !! if \(x\) denotes particle mass or volume, then \(moment=1\), whereas if \(x\) denotes
+   !! particle radius or diameter, then \(moment=3\).
       type(grid1), intent(in) :: grid
          !! `grid1` object
       procedure(afnc_t) :: a
@@ -81,15 +89,15 @@ contains
    end function aggterm_init
 
    pure subroutine aggterm_eval(self, u, y, udot, udot_birth, udot_death)
-   !! Evaluate rate of aggregation at a given instant.
+   !! Evaluate rate of aggregation at a given instant \(t\).
       class(aggterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! cell-average number density, \( \bar{u_i} \)
+         !! cell-average number density, \( \bar{u_i}(t) \)
       real(rk), intent(in) :: y(:)
-         !! environment vector, \(y_j\)
+         !! environment vector, \(y_j(t)\)
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change (birth-death), \( d\bar{u_i}/dt \)
+         !! net rate of change (birth-death), \( \dot{u_i}(t) \)
       real(rk), intent(out), optional :: udot_birth(:)
          !! rate of birth
       real(rk), intent(out), optional :: udot_death(:)

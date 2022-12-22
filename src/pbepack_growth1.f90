@@ -46,6 +46,10 @@ contains
 
    type(growthterm) function growthterm_init(grid, g, k, name) result(self)
    !! Initialize `growthterm` object.
+   !!$$
+   !! \left ( \dot{u} \right )_{\mathrm{growth}} =
+   !! \frac{\partial }{\partial x}\left ( g(x,\mathbf{y})u(x,t) \right )
+   !!$$
       type(grid1), intent(in) :: grid
          !! `grid1` object
       procedure(gfnc_t) :: g
@@ -75,15 +79,15 @@ contains
    end function growthterm_init
 
    pure subroutine growthterm_eval(self, u, y, udot)
-   !! Evaluate rate of particle growth at a given instant.
+   !! Evaluate rate of particle growth at a given instant \(t\).
       class(growthterm), intent(inout) :: self
          !! object
       real(rk), intent(in) :: u(:)
-         !! cell-average number density, \( \bar{u_i} \)
+         !! cell-average number density, \( \bar{u_i}(t) \)
       real(rk), intent(in) :: y(:)
-         !! environment vector, \( y_j \)
+         !! environment vector, \(y_j(t)\)
       real(rk), intent(out), optional :: udot(:)
-         !! net rate of change, \( d\bar{u_i}/dt \)
+         !! net rate of change, \( \dot{u_i}(t) \)
 
       integer :: i
 
