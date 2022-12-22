@@ -137,7 +137,7 @@ contains
          !if (self%update_d .or. self%empty_d) call self%compute_d(y)
 
          ! Death/sink term
-         death = b*u
+         death = u*b
          if (present(udot_death)) udot_death = death
 
          ! Birth/source term
