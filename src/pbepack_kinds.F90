@@ -5,7 +5,7 @@ module pbepack_kinds
    private
 
    public :: rk, dp
-   public :: ZERO, ONE, TWO, HALF
+   public :: EPS, ZERO, ONE, TWO, HALF
    public :: VOIDREAL
 
 ! #ifdef REAL32
@@ -18,6 +18,7 @@ module pbepack_kinds
    integer, parameter :: dp = real64
    real(rk), parameter :: ZERO = 0._rk, ONE = 1._rk, TWO = 2._rk
    real(rk), parameter :: HALF = ONE/2
+   real(rk), parameter :: EPS = epsilon(ONE)
    real(rk) :: VOIDREAL(1:0)
 
 end module pbepack_kinds
