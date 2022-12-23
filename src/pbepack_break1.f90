@@ -69,7 +69,7 @@ contains
    !! \int _x^\infty d(x,x',\mathbf{y})b(x',\mathbf{y})u(x',t)dx'
    !! -b(x,\mathbf{y})u(x,t)
    !!$$
-   !! where \(moment\) is the moment of \(x\) to be preserved upon breakage. For example,
+   !! where \(moment\) is the moment of \(x\) conserved upon breakage. For example,
    !! if \(x\) denotes particle mass or volume, then \(moment=1\), whereas if \(x\) denotes
    !! particle radius or diameter, then \(moment=3\).
       type(grid1), intent(in) :: grid
@@ -79,7 +79,7 @@ contains
       procedure(dfnc_t) :: d
          !! daughter distribution function, \( d(x,x',\textbf{y}) \)
       integer, intent(in), optional :: moment
-         !! moment of \( x \) to be preserved upon breakage (default=1)
+         !! moment of \(x\) conserved during breakage (default=1)
       logical, intent(in), optional :: update_b
          !! if `true`, \( b(x,\textbf{y}) \) is reevaluated at each step (default=true)
       logical, intent(in), optional :: update_d

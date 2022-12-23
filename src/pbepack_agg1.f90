@@ -56,7 +56,7 @@ contains
    !! \int _0^{x/2} a(x-x',x',\mathbf{y})u(x-x',t)u(x',t)dx'
    !! -u(x,t)\int _0^\infty a(x,x',\mathbf{y})u(x',t)dx'
    !!$$
-   !! where \(moment\) is the moment of \(x\) to be preserved upon aggregation. For example,
+   !! where \(moment\) is the moment of \(x\) conserved upon aggregation. For example,
    !! if \(x\) denotes particle mass or volume, then \(moment=1\), whereas if \(x\) denotes
    !! particle radius or diameter, then \(moment=3\).
       type(grid1), intent(in) :: grid
@@ -64,7 +64,7 @@ contains
       procedure(afnc_t) :: a
          !! aggregation frequency function, \( a(x,x',\textbf{y}) \)
       integer, intent(in), optional :: moment
-         !! moment of \( x \) to be preserved upon aggregation (default=1)
+         !! moment of \(x\) conserved during aggregation (default=1)
       logical, intent(in), optional :: update_a
          !! if `true`, \( a(x,x',\textbf{y}) \) is reevaluated at each step (default=true)
       character(*), intent(in), optional :: name
