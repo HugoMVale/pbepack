@@ -6,8 +6,10 @@ module pbepack_pbe1
    use pbepack_break1, only: breakterm, bfnc_t, dfnc_t
    use pbepack_growth1, only: growthterm, gfnc_t
    use pbepack_quadratures, only: quadgrid1
+   use pbepack_lib, only: writearray, buildfilename
    use hrweno_grids, only: grid1
    use stdlib_optval, only: optval
+   use stdlib_strings, only: to_string
    use odepack_mod, only: lsoda_class
    implicit none
    private
@@ -39,6 +41,8 @@ module pbepack_pbe1
          !! number of evaluations of \( d\bar{\textbf{u}}/dt \)
       logical :: success = .false.
          !! flag indicating if integration was successfull
+   contains
+      procedure, pass(self), public :: write => pbesol_write
    end type pbesol
 
    abstract interface
@@ -134,20 +138,6 @@ contains
       self%inited = .true.
 
    end function pbe_init
-
-   pure type(pbesol) function pbesol_init(npoints, ncells, nenvs) result(res)
-   !! Initialize `pbesol` object.
-      integer, intent(in) :: npoints
-         !! number of time points, i.e. `size(times)`
-      integer, intent(in) :: ncells
-         !! number of grid cells, i.e. `size(u)`
-      integer, intent(in) :: nenvs
-         !! number of environment variables, i.e. `size(y)`
-
-      allocate (res%t(npoints), res%u(ncells, npoints), res%y(nenvs, npoints))
-      res%inited = .true.
-
-   end function
 
    pure subroutine pbe_eval(self, u, y, udot)
    !! Evaluate total rate of change at a given instant.
@@ -288,5 +278,40 @@ contains
       end subroutine
 
    end function pbe_integrate
+
+   pure type(pbesol) function pbesol_init(npoints, ncells, nenvs) result(res)
+   !! Initialize `pbesol` object.
+      integer, intent(in) :: npoints
+         !! number of time points, i.e. `size(times)`
+      integer, intent(in) :: ncells
+         !! number of grid cells, i.e. `size(u)`
+      integer, intent(in) :: nenvs
+         !! number of environment variables, i.e. `size(y)`
+
+      allocate (res%t(npoints), res%u(ncells, npoints), res%y(nenvs, npoints))
+      res%inited = .true.
+
+   end function
+
+   subroutine pbesol_write(self, basename)
+   !! Write content of `pbesol`to file.
+      class(pbesol), intent(inout) :: self
+         !! object
+      character(*), intent(in) :: basename
+         !! base name
+
+      call writearray(buildname("t"), self%t)
+      call writearray(buildname("y"), self%y)
+      call writearray(buildname("u"), self%u)
+
+   contains
+
+      pure function buildname(suffix) result(res)
+         character(*), intent(in) :: suffix
+         character(:), allocatable :: res
+         res = buildfilename(".\output\", basename, suffix)
+      end function
+
+   end subroutine pbesol_write
 
 end module pbepack_pbe1
