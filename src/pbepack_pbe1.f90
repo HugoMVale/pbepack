@@ -97,7 +97,7 @@ contains
       procedure(dfnc_t), optional :: d
          !! daughter distribution function, \( d(x,x',\textbf{y}) \)
       integer, intent(in), optional :: moment
-         !! moment of \( x \) to be preserved upon aggregation/breakage (default=1)
+         !! moment of \(x\) conserved during aggregation/breakage (default=1)
       logical, intent(in), optional :: update_a
          !! if `true`, \( a(x,x',\textbf{y}) \) is reevaluated at each step (default=true)
       logical, intent(in), optional :: update_b
