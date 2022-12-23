@@ -1,7 +1,7 @@
 module pbepack_agg1
 !! Derived types and procedures to compute the *aggregation* term for 1D PBEs.
    use pbepack_kinds
-   use pbepack_math, only: delta_kronecker
+   use pbepack_lib, only: delta_kronecker
    use pbepack_algebra, only: spmatrix
    use pbepack_basetypes, only: particleterm
    use pbepack_aggtypes, only: comblist, combarray

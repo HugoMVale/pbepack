@@ -4,7 +4,7 @@ module test_pbe1
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds, only: rk
    use pbepack_pbe1, only: pbe, pbesol
-   use pbepack_math, only: boxcar
+   use pbepack_lib, only: boxcar
    use hrweno_grids, only: grid1
    use utils_tests
    use stdlib_strings, only: to_string
