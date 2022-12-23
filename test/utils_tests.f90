@@ -28,17 +28,6 @@ contains
       res = (xa + xb)
    end function
 
-   pure real(rk) function aprod(xa, xb, y) result(res)
-      !! Product aggregation kernel for 1D system
-      real(rk), intent(in) :: xa
-         !! internal coordinate of particle a
-      real(rk), intent(in) :: xb
-         !! internal coordinate of particle b
-      real(rk), intent(in) :: y(:)
-         !! environment vector
-      res = xa*xb
-   end function
-
    pure real(rk) function bconst(x, y) result(res)
    !! Constant breakage kernel for 1D system
       real(rk), intent(in) :: x
@@ -89,20 +78,6 @@ contains
          !! environment vector
       res = x
    end function
-
-   elemental real(rk) function expo1d(x, x0, n0) result(res)
-   !! 1D Exponential distribution.
-      real(rk), intent(in) :: x
-         !! random variable
-      real(rk), intent(in), optional :: x0
-         !! mean value
-      real(rk), intent(in), optional :: n0
-         !! initial number of particles
-      real(rk) :: x0_, n0_
-      x0_ = optval(x0, ONE)
-      n0_ = optval(n0, ONE)
-      res = (n0_/x0_)*exp(-x/x0_)
-   end function expo1d
 
    pure function aconst_moments(t, x0, n0, a0) result(res)
    !! Moment solution for IC='expo1d' and constant aggregation frequency.
