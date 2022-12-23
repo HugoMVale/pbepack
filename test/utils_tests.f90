@@ -37,25 +37,25 @@ contains
       res = ONE
    end function
 
-   pure real(rk) function bsquare(x, y) result(res)
-   !! Square breakage kernel for 1D system
+   pure real(rk) function blinear(x, y) result(res)
+   !! Linear breakage kernel for 1D system
       real(rk), intent(in) :: x
          !! internal coordinate of particle
       real(rk), intent(in) :: y(:)
          !! environment vector
-      res = x**2
+      res = x
    end function
 
    pure real(rk) function duniform(xd, xo, y, moment) result(res)
    !! Uniform daughter distribution kernel for 1D system
       real(rk), intent(in) :: xd
-         !! internal coordinate of daughter particle
+         !! internal coordinate of (d)aughter particle
       real(rk), intent(in) :: xo
-         !! internal coordinate of original particle
+         !! internal coordinate of (o)riginal particle
       real(rk), intent(in) :: y(:)
          !! environment vector
       integer, intent(in), optional :: moment
-         !! moment of \( x \) conserved during breakage
+         !! moment of \(x\) conserved during breakage
       integer :: m
       m = optval(moment, 1)
       res = (TWO*m/xo**m)*xd**(m - 1)
