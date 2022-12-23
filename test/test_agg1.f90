@@ -84,7 +84,7 @@ contains
    subroutine test_aconst(error)
       type(error_type), allocatable, intent(out) :: error
 
-      integer, parameter :: nc = 200
+      integer, parameter :: nc = 100
       type(grid1) :: gx
       type(pbe) :: equation
       type(pbesol) :: solution
@@ -94,13 +94,13 @@ contains
       integer :: i
 
       ! Init linear grid
-      call gx%log(1e-3_rk, 2e2_rk, nc)
+      call gx%log(1e-2_rk, 1e2_rk, nc)
 
       ! Init pbe object
       equation = pbe(gx, a=aconst, name="test_aconst")
 
       ! Integrate
-      times = linspace(ZERO, ONE, 2)
+      times = linspace(ZERO, TWO, 2)
       solution = equation%integrate(times, u0)
 
       ! Compute solution moments
@@ -122,6 +122,7 @@ contains
             write (stderr, '(a18,(es24.14e3))') &
                "num./analyt.("//to_string(i)//") =", moment(i)/momoment_ref(i)
          end do
+         call solution%write("test_aconst")
       end if
 
    end subroutine test_aconst
@@ -139,13 +140,13 @@ contains
       integer :: i
 
       ! Init linear grid
-      call gx%log(1e-3_rk, 1e3_rk, nc)
+      call gx%log(1e-2_rk, 1e4_rk, nc)
 
       ! Init pbe object
       equation = pbe(gx, a=asum, name="test_asum")
 
       ! Integrate
-      times = linspace(ZERO, ONE, 2)
+      times = linspace(ZERO, TWO, 10)
       solution = equation%integrate(times, u0)
 
       ! Compute solution moments
@@ -160,20 +161,21 @@ contains
 
       ! Check moments
       call check(error, moment(0), moment_ref(0), rel=.true., thr=1e-6_rk)
-      call check(error, moment(1), moment_ref(1), rel=.true., thr=100*EPS)
+      call check(error, moment(1), moment_ref(1), rel=.true., thr=1e2*EPS)
 
       if (allocated(error) .or. verbose) then
          do i = 0, 1
             write (stderr, '(a18,(es24.14e3))') &
                "num./analyt.("//to_string(i)//") =", moment(i)/moment_ref(i)
          end do
+         call solution%write("test_asum")
       end if
 
    end subroutine test_asum
 
    pure real(rk) function u0(x) result(res)
       real(rk), intent(in) :: x
-      res = expo1d(x, ONE, ONE)
+      res = expo1d(x)
    end function
 
 end module test_agg1
