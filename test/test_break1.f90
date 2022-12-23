@@ -3,11 +3,11 @@ module test_break1
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
-   use pbepack_pbe1, only: pbe
+   use pbepack_lib
+   use pbepack_pbe1, only: pbe, pbesol
    use pbepack_quadratures, only: evalmoment
    use hrweno_grids, only: grid1
-   use utils_tests, only: bconst, duniform
-   use stdlib_strings, only: to_string
+   use utils_tests
    implicit none
    private
 
@@ -23,9 +23,8 @@ contains
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
 
       testsuite = [ &
-                  new_unittest("moment conservation", test_moment_conservation) &
-                  ! new_unittest("call from pbe", test_pbe_break)
-                  !new_unittest("analytical solution, case 1", test_case1) &
+                  new_unittest("moment conservation", test_moment_conservation), &
+                  new_unittest("case b(x)=x", test_blinear) &
                   ]
 
    end subroutine
@@ -86,5 +85,63 @@ contains
       end function
 
    end subroutine test_moment_conservation
+
+   subroutine test_blinear(error)
+      type(error_type), allocatable, intent(out) :: error
+
+      integer, parameter :: nc = 200
+      type(grid1) :: gx
+      type(pbe) :: equation
+      type(pbesol) :: solution
+      real(rk) :: u(nc), n0, x0
+      real(rk), dimension(0:2) :: moment, moment_ref
+      real(rk), allocatable :: times(:)
+      integer :: i
+
+      ! Init linear grid
+      call gx%geometric(ZERO, 2e1_rk, 1.03_rk, nc)
+
+      ! Init pbe object
+      equation = pbe(gx, b=blinear, d=dfuni, name="test_blinear")
+
+      ! Integrate
+      times = linspace(ZERO, TWO, 2)
+      solution = equation%integrate(times, u0)
+
+      ! Compute solution moments
+      do i = 0, 2
+         moment(i) = evalmoment(solution%u(:, size(times)), gx, i)
+      end do
+
+      ! Compute reference moments
+      n0 = evalmoment(solution%u(:, 1), gx, 0)
+      x0 = evalmoment(solution%u(:, 1), gx, 1)/n0
+      moment_ref = blinear_moments(times(size(times)), x0=x0, n0=n0)
+
+      ! Check moments
+      call check(error, moment(0), moment_ref(0), rel=.true., thr=1e-2_rk)
+      call check(error, moment(1), moment_ref(1), rel=.true., thr=1e-5_rk)
+
+      if (allocated(error) .or. verbose) then
+         do i = 0, 2
+            write (stderr, '(a18,(es24.14e3))') &
+               "num./analyt.("//to_string(i)//") =", moment(i)/moment_ref(i)
+         end do
+         call solution%write("test_blinear")
+      end if
+
+   contains
+
+      pure real(rk) function dfuni(xd, xo, y) result(res)
+         real(rk), intent(in) :: xd, xo, y(:)
+         res = duniform(xd, xo, y, 1)
+      end function
+
+   end subroutine test_blinear
+
+   pure real(rk) function u0(x) result(res)
+      real(rk), intent(in) :: x
+      res = expo1d(x)
+   end function
 
 end module test_break1
