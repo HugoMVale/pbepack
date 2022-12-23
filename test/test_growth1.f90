@@ -3,17 +3,17 @@ module test_growth1
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
+   use pbepack_lib
    use pbepack_pbe1, only: pbe
    use pbepack_quadratures, only: evalmoment
    use hrweno_grids, only: grid1
-   use utils_tests, only: gconst
-   use stdlib_strings, only: to_string
+   use utils_tests
    implicit none
    private
 
    public :: collect_tests_growth1
 
-   logical, parameter :: verbose = .true.
+   logical, parameter :: verbose = .false.
 
 contains
 

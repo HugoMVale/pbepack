@@ -3,19 +3,18 @@ module test_agg1
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
+   use pbepack_lib
    use pbepack_pbe1, only: pbe, pbesol
    use pbepack_quadratures, only: evalmoment
-   use pbepack_lib, only: expo1d
    use hrweno_grids, only: grid1
    use utils_tests
-   use stdlib_strings, only: to_string
-   use stdlib_math, only: linspace
+
    implicit none
    private
 
    public :: collect_tests_agg1
 
-   logical, parameter :: verbose = .true.
+   logical, parameter :: verbose = .false.
 
 contains
 
@@ -90,7 +89,7 @@ contains
       type(pbe) :: equation
       type(pbesol) :: solution
       real(rk) :: u(nc), n0, x0
-      real(rk), dimension(0:1) :: moment, momoment_ref
+      real(rk), dimension(0:2) :: moment, momoment_ref
       real(rk), allocatable :: times(:)
       integer :: i
 
@@ -105,7 +104,7 @@ contains
       solution = equation%integrate(times, u0)
 
       ! Compute solution moments
-      do i = 0, 1
+      do i = 0, 2
          moment(i) = evalmoment(solution%u(:, size(times)), gx, i)
       end do
 
@@ -119,7 +118,7 @@ contains
       call check(error, moment(1), momoment_ref(1), rel=.true., thr=100*EPS)
 
       if (allocated(error) .or. verbose) then
-         do i = 0, 1
+         do i = 0, 2
             write (stderr, '(a18,(es24.14e3))') &
                "num./analyt.("//to_string(i)//") =", moment(i)/momoment_ref(i)
          end do
@@ -136,7 +135,7 @@ contains
       type(pbe) :: equation
       type(pbesol) :: solution
       real(rk) :: u(nc), n0, x0
-      real(rk), dimension(0:1) :: moment, moment_ref
+      real(rk), dimension(0:2) :: moment, moment_ref
       real(rk), allocatable :: times(:)
       integer :: i
 

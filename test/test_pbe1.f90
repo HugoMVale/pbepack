@@ -2,13 +2,11 @@ module test_pbe1
 !! Test for module 'pbe' using test-drive.
    use iso_fortran_env, only: stderr => error_unit
    use testdrive, only: new_unittest, unittest_type, error_type, check
-   use pbepack_kinds, only: rk
+   use pbepack_kinds
+   use pbepack_lib
    use pbepack_pbe1, only: pbe, pbesol
-   use pbepack_lib, only: boxcar
    use hrweno_grids, only: grid1
    use utils_tests
-   use stdlib_strings, only: to_string
-   use stdlib_math, only: linspace
    implicit none
    private
 

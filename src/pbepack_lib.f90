@@ -3,6 +3,7 @@ module pbepack_lib
    use pbepack_kinds
    use stdlib_optval, only: optval
    use stdlib_strings, only: to_string
+   use stdlib_math, only: linspace
    implicit none
    public
 

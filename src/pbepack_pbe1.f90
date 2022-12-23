@@ -1,15 +1,13 @@
 module pbepack_pbe1
 !! Derived types and procedures to solve 1D PBEs.
    use pbepack_kinds
+   use pbepack_lib, only: optval, to_string, writearray, buildfilename
    use pbepack_basetypes, only: base, pbeterm
    use pbepack_agg1, only: aggterm, afnc_t
    use pbepack_break1, only: breakterm, bfnc_t, dfnc_t
    use pbepack_growth1, only: growthterm, gfnc_t
    use pbepack_quadratures, only: quadgrid1
-   use pbepack_lib, only: writearray, buildfilename
    use hrweno_grids, only: grid1
-   use stdlib_optval, only: optval
-   use stdlib_strings, only: to_string
    use odepack_mod, only: lsoda_class
    implicit none
    private

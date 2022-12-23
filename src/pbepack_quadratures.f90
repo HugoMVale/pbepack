@@ -1,7 +1,7 @@
 module pbepack_quadratures
    use pbepack_kinds
+   use pbepack_lib, only: optval
    use hrweno_grids, only: grid1
-   use stdlib_optval, only: optval
    implicit none
    private
 
