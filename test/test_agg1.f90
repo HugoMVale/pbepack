@@ -146,7 +146,7 @@ contains
       equation = pbe(gx, a=asum, name="test_asum")
 
       ! Integrate
-      times = linspace(ZERO, TWO, 10)
+      times = linspace(ZERO, TWO, 2)
       solution = equation%integrate(times, u0)
 
       ! Compute solution moments
