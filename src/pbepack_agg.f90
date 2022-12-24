@@ -1,6 +1,6 @@
-module pbepack_agg1
+module pbepack_agg
 !! Derived types and procedures to compute the *aggregation* term for 1D PBEs.
-   use pbepack_kinds
+   use pbepack_kinds, only: rk, ZERO, ONE, HALF
    use pbepack_lib, only: delta_kronecker
    use pbepack_algebra, only: spmatrix
    use pbepack_basetypes, only: particleterm
@@ -240,4 +240,4 @@ contains
 
    end subroutine compute_combinations
 
-end module pbepack_agg1
+end module pbepack_agg

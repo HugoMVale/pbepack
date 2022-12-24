@@ -1,6 +1,6 @@
-module pbepack_growth1
+module pbepack_growth
 !! Derived types and procedures to compute the *growth* term for 1D PBEs.
-   use pbepack_kinds
+   use pbepack_kinds, only: rk, ZERO
    use pbepack_basetypes, only: pbeterm
    use hrweno_grids, only: grid1
    use hrweno_weno, only: weno
@@ -125,4 +125,4 @@ contains
 
    end subroutine growthterm_eval
 
-end module pbepack_growth1
+end module pbepack_growth

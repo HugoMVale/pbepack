@@ -1,7 +1,7 @@
 module pbepack_basetypes
 !!   This module implements a number of (abstract) derived data types which form the basis for
 !! the other derived types in this package.
-   use pbepack_kinds
+   use pbepack_kinds, only: rk
    use pbepack_lib, only: optval
    use hrweno_grids, only: grid1
    implicit none

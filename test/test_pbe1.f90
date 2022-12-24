@@ -4,8 +4,7 @@ module test_pbe1
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use pbepack_kinds
    use pbepack_lib
-   use pbepack_pbe1, only: pbe, pbesol
-   use hrweno_grids, only: grid1
+   use pbepack
    use utils_tests
    implicit none
    private
@@ -49,7 +48,7 @@ contains
       ! Evaluate rate of change at a given point
       u = ZERO; u(1:nc/2 - 1) = ONE
       y = ZERO
-      call equation%eval(u, y, udot(:, 0))
+      call equation%eval(u, y, udot=udot(:, 0))
       call equation%agg%eval(u, y, udot(:, 1))
       call equation%break%eval(u, y, udot(:, 2))
       call equation%growth%eval(u, y, udot(:, 3))

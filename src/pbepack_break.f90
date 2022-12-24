@@ -1,6 +1,6 @@
-module pbepack_break1
+module pbepack_break
 !! Derived types and procedures to compute the *breakage* term for 1D PBEs.
-   use pbepack_kinds
+   use pbepack_kinds, only: rk, ZERO
    use pbepack_basetypes, only: particleterm
    use hrweno_grids, only: grid1
    implicit none
@@ -250,4 +250,4 @@ contains
 
    end subroutine compute_d
 
-end module pbepack_break1
+end module pbepack_break

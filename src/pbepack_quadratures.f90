@@ -1,5 +1,5 @@
 module pbepack_quadratures
-   use pbepack_kinds
+   use pbepack_kinds, only: rk
    use pbepack_lib, only: optval
    use hrweno_grids, only: grid1
    implicit none

@@ -1,6 +1,6 @@
 module pbepack_algebra
 !! Special array types.
-   use pbepack_kinds
+   use pbepack_kinds, only: rk, ZERO
    implicit none
    private
 

@@ -1,6 +1,6 @@
 module pbepack_lib
 !! Auxiliary functions.
-   use pbepack_kinds
+   use pbepack_kinds, only: rk, ZERO, ONE
    use stdlib_optval, only: optval
    use stdlib_strings, only: to_string
    use stdlib_math, only: linspace
