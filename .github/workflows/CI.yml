@@ -39,7 +39,7 @@ jobs:
       run: |
         gfortran --version
         rm -rf ./build/gfortran*
-        fpm test --profile debug --flag --coverage --verbose
+        fpm test --profile debug --flag --coverage
         gcov ./build/gfortran*/pbetools/src*.gcda -r ./src/ -b -w
                
     - name: Run examples
