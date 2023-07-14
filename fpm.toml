@@ -15,7 +15,6 @@ library = false
 
 [dependencies]
 stdlib = *
-stdlib = { git = "https://github.com/HugoMVale/stdlib", branch = "stdlib-fpm" }
 hrweno = { git = "https://github.com/HugoMVale/HR-WENO", branch = "main" }
 odepack = { git = "https://github.com/Nicholaswogan/odepack", branch = "main" }
 
