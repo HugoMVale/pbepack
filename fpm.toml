@@ -14,7 +14,7 @@ auto-examples = true
 library = false
 
 [dependencies]
-stdlib = { git = "https://github.com/HugoMVale/stdlib", branch = "stdlib-fpm" }
+stdlib = "*"
 hrweno = { git = "https://github.com/HugoMVale/HR-WENO", branch = "main" }
 odepack = { git = "https://github.com/Nicholaswogan/odepack", branch = "main"}
 
