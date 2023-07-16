@@ -14,9 +14,9 @@ auto-examples = true
 library = false
 
 [dependencies]
-stdlib = { git = "https://github.com/HugoMVale/stdlib", branch = "stdlib-fpm" }
+stdlib = { git = "https://github.com/fortran-lang/stdlib", branch = "stdlib-fpm" }
 hrweno = { git = "https://github.com/HugoMVale/HR-WENO", branch = "main" }
-odepack = { git = "https://github.com/HugoMVale/odepack", branch = "main" }
+odepack = { git = "https://github.com/Nicholaswogan/odepack", branch = "main" }
 
 [dev-dependencies]
 test-drive = { git = "https://github.com/zoziha/test-drive", branch = "add-support-array" }
