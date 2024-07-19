@@ -1,7 +1,7 @@
 # pbepack
 
 [![CI](https://github.com/HugoMVale/pbetools/actions/workflows/CI.yml/badge.svg)](https://github.com/HugoMVale/pbetools/actions)
-[![codecov](https://codecov.io/gh/HugoMVale/pbetools/branch/main/graph/badge.svg?token=1XL5LQSO9P)](https://codecov.io/gh/HugoMVale/pbetools)
+[![codecov](https://codecov.io/gh/HugoMVale/pbepack/graph/badge.svg?token=HPSERAGMA4)](https://codecov.io/gh/HugoMVale/pbepack)
 [![Language](https://img.shields.io/badge/-Fortran-734f96?logo=fortran&logoColor=white)](https://github.com/topics/fortran)
 
 ## Status
